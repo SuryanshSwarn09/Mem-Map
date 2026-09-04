@@ -85,7 +85,7 @@ MainWindow::MainWindow(QWidget* parent)
 }
 
 void MainWindow::setupUi() {
-    setWindowTitle(QStringLiteral("Disk Space Analyzer - High Performance C++ & Qt6"));
+    setWindowTitle(QStringLiteral("Mem-Map - High Performance Storage Visualizer (C++ & Qt6)"));
 
     QWidget* centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);

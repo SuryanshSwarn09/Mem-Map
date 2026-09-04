@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(DiskSpaceAnalyzer LANGUAGES CXX)
+project(Mem-Map LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -45,26 +45,26 @@ set(UI_SOURCES
     src/ui/MainWindow.cpp
 )
 
-add_executable(DiskSpaceAnalyzer
+add_executable(Mem-Map
     src/main.cpp
     ${CORE_SOURCES}
     ${UI_SOURCES}
 )
 
-target_include_directories(DiskSpaceAnalyzer PRIVATE
+target_include_directories(Mem-Map PRIVATE
     src
     src/core
     src/ui
 )
 
-target_link_libraries(DiskSpaceAnalyzer PRIVATE
+target_link_libraries(Mem-Map PRIVATE
     Qt6::Core
     Qt6::Gui
     Qt6::Widgets
 )
 
 if(WIN32)
-    target_link_libraries(DiskSpaceAnalyzer PRIVATE
+    target_link_libraries(Mem-Map PRIVATE
         shlwapi
         shell32
     )

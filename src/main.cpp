@@ -9,10 +9,10 @@ int main(int argc, char* argv[]) {
 #endif
 
     QApplication app(argc, argv);
-    app.setApplicationName(QStringLiteral("Disk Space Analyzer"));
-    app.setApplicationDisplayName(QStringLiteral("Disk Space Analyzer"));
+    app.setApplicationName(QStringLiteral("Mem-Map"));
+    app.setApplicationDisplayName(QStringLiteral("Mem-Map"));
     app.setApplicationVersion(QStringLiteral("1.0.0"));
-    app.setOrganizationName(QStringLiteral("MemScan"));
+    app.setOrganizationName(QStringLiteral("Mem-Map"));
 
     QFont defaultFont(QStringLiteral("Segoe UI"), 10);
     defaultFont.setStyleHint(QFont::SansSerif);

@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
     QCoreApplication app(argc, argv);
 
     std::cout << "========================================" << std::endl;
-    std::cout << "  Disk Space Analyzer Automated Tests   " << std::endl;
+    std::cout << "      Mem-Map Automated Unit Tests     " << std::endl;
     std::cout << "========================================" << std::endl;
 
     testDiskNodeBottomUp();

@@ -1,6 +1,6 @@
-# Disk Space Analyzer (C++20 & Qt 6)
+# Mem-Map (C++20 & Qt 6)
 
-A high-performance desktop Disk Space Analyzer for Windows (similar to WinDirStat, TreeSize, and DaisyDisk) engineered for speed, low resource usage, and interactive visualization.
+A high-performance desktop Disk Space & Storage Analyzer for Windows (similar to WinDirStat, TreeSize, and DaisyDisk) engineered for speed, low resource usage, and interactive visualization.
 
 ---
 
@@ -63,7 +63,7 @@ A high-performance desktop Disk Space Analyzer for Windows (similar to WinDirSta
 Double-click [`run.bat`](file:///e:/Mem-scan/run.bat) or run from PowerShell:
 ```powershell
 $env:PATH = "C:\msys64\ucrt64\bin;C:\msys64\usr\bin;" + $env:PATH
-.\build\DiskSpaceAnalyzer.exe
+.\build\Mem-Map.exe
 ```
 
 ### Running Automated Tests
