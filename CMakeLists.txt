@@ -29,6 +29,8 @@ set(UI_SOURCES
     src/ui/TreemapLayout.cpp
     src/ui/TreemapWidget.h
     src/ui/TreemapWidget.cpp
+    src/ui/SunburstWidget.h
+    src/ui/SunburstWidget.cpp
     src/ui/DiskTreeModel.h
     src/ui/DiskTreeModel.cpp
     src/ui/SizeBarDelegate.h

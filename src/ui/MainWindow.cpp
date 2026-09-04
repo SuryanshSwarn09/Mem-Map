@@ -10,6 +10,7 @@
 #include <QClipboard>
 #include <QGuiApplication>
 #include <QProcess>
+#include <QStackedWidget>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -44,7 +45,7 @@ MainWindow::MainWindow(QWidget* parent)
         QAction* actZoom = nullptr;
         if (node->isDirectory()) {
             menu.addSeparator();
-            actZoom = menu.addAction(QStringLiteral("Zoom Treemap to this folder"));
+            actZoom = menu.addAction(QStringLiteral("Zoom Visualizer to this folder"));
         }
 
         QAction* selected = menu.exec(m_treeView->viewport()->mapToGlobal(pos));
@@ -58,6 +59,7 @@ MainWindow::MainWindow(QWidget* parent)
             QGuiApplication::clipboard()->setText(node->fullPath());
         } else if (actZoom && selected == actZoom) {
             m_treemapWidget->zoomIn(node);
+            m_sunburstWidget->zoomIn(node);
         }
     });
 
@@ -65,6 +67,11 @@ MainWindow::MainWindow(QWidget* parent)
     connect(m_treemapWidget, &TreemapWidget::nodeSelected, this, &MainWindow::onTreemapNodeSelected);
     connect(m_treemapWidget, &TreemapWidget::nodeDoubleClicked, this, &MainWindow::onTreemapNodeDoubleClicked);
     connect(m_treemapWidget, &TreemapWidget::currentRootChanged, this, &MainWindow::onTreemapRootChanged);
+
+    // Sunburst signals
+    connect(m_sunburstWidget, &SunburstWidget::nodeSelected, this, &MainWindow::onSunburstNodeSelected);
+    connect(m_sunburstWidget, &SunburstWidget::nodeDoubleClicked, this, &MainWindow::onSunburstNodeDoubleClicked);
+    connect(m_sunburstWidget, &SunburstWidget::currentRootChanged, this, &MainWindow::onSunburstRootChanged);
 
     // Breadcrumb signals
     connect(m_breadcrumb, &BreadcrumbWidget::folderSelected, this, &MainWindow::onBreadcrumbFolderSelected);
@@ -166,11 +173,48 @@ void MainWindow::setupUi() {
     m_topFilesWidget = new TopFilesWidget(this);
     m_tabs->addTab(m_topFilesWidget, QStringLiteral("Top 100 Files"));
 
-    // Treemap
+    // Right Pane: Visualization Container with View Switcher
+    m_visContainer = new QWidget(this);
+    QVBoxLayout* visLayout = new QVBoxLayout(m_visContainer);
+    visLayout->setContentsMargins(0, 0, 0, 0);
+    visLayout->setSpacing(6);
+
+    // View Switcher Bar
+    QHBoxLayout* visHeader = new QHBoxLayout();
+    visHeader->setContentsMargins(4, 0, 4, 0);
+    visHeader->setSpacing(6);
+
+    QLabel* lblVis = new QLabel(QStringLiteral("Visualizer:"), this);
+    lblVis->setStyleSheet(QStringLiteral("color: #8B949E; font-weight: bold; font-size: 12px;"));
+    visHeader->addWidget(lblVis);
+
+    m_btnTreemapView = new QPushButton(QStringLiteral("▦ Treemap"), this);
+    m_btnSunburstView = new QPushButton(QStringLiteral("🔘 Sunburst (DaisyDisk)"), this);
+
+    m_btnTreemapView->setCheckable(true);
+    m_btnSunburstView->setCheckable(true);
+    m_btnTreemapView->setChecked(true);
+    m_btnTreemapView->setObjectName(QStringLiteral("visToggle"));
+    m_btnSunburstView->setObjectName(QStringLiteral("visToggle"));
+
+    connect(m_btnTreemapView, &QPushButton::clicked, this, [this]() { setVisualizerView(0); });
+    connect(m_btnSunburstView, &QPushButton::clicked, this, [this]() { setVisualizerView(1); });
+
+    visHeader->addWidget(m_btnTreemapView);
+    visHeader->addWidget(m_btnSunburstView);
+    visHeader->addStretch();
+    visLayout->addLayout(visHeader);
+
+    // Stacked Visualizers
+    m_visStack = new QStackedWidget(this);
     m_treemapWidget = new TreemapWidget(this);
+    m_sunburstWidget = new SunburstWidget(this);
+    m_visStack->addWidget(m_treemapWidget);
+    m_visStack->addWidget(m_sunburstWidget);
+    visLayout->addWidget(m_visStack, 1);
 
     m_mainSplitter->addWidget(m_tabs);
-    m_mainSplitter->addWidget(m_treemapWidget);
+    m_mainSplitter->addWidget(m_visContainer);
     m_mainSplitter->setStretchFactor(0, 5);
     m_mainSplitter->setStretchFactor(1, 5);
 
@@ -211,6 +255,9 @@ void MainWindow::applyDarkTheme() {
         "QWidget { color: #C9D1D9; font-family: 'Segoe UI', 'SF Pro Display', sans-serif; font-size: 13px; }"
         "QComboBox, QPushButton, QLineEdit { background-color: #21262D; border: 1px solid #30363D; border-radius: 6px; padding: 5px 10px; color: #C9D1D9; }"
         "QComboBox:hover, QPushButton:hover { background-color: #30363D; border-color: #8B949E; }"
+        "QPushButton#visToggle { background-color: #21262D; border: 1px solid #30363D; border-radius: 4px; padding: 4px 12px; color: #8B949E; font-weight: bold; font-size: 12px; }"
+        "QPushButton#visToggle:checked { background-color: #1F6FEB; border-color: #388BFD; color: #FFFFFF; }"
+        "QPushButton#visToggle:hover:!checked { background-color: #30363D; color: #C9D1D9; }"
         "QComboBox::drop-down { border: none; width: 20px; }"
         "QComboBox QAbstractItemView { background-color: #161B22; border: 1px solid #30363D; selection-background-color: #1F6FEB; color: #C9D1D9; }"
         "QTabWidget::pane { border: 1px solid #30363D; background-color: #161B22; border-radius: 6px; }"
@@ -353,8 +400,9 @@ void MainWindow::onScanFinished(std::shared_ptr<DiskNode> rootNode, qint64 elaps
             m_treeView->expand(m_treeModel->index(0, 0));
         }
 
-        // Populate treemap
+        // Populate treemap and sunburst
         m_treemapWidget->setRootNode(m_rootNode.get());
+        m_sunburstWidget->setRootNode(m_rootNode.get());
 
         // Populate analytics tabs
         m_extStatsWidget->populateFromNode(m_rootNode.get());
@@ -365,6 +413,7 @@ void MainWindow::onScanFinished(std::shared_ptr<DiskNode> rootNode, qint64 elaps
     } else {
         m_treeModel->setRootNode(nullptr);
         m_treemapWidget->setRootNode(nullptr);
+        m_sunburstWidget->setRootNode(nullptr);
         m_extStatsWidget->clear();
         m_topFilesWidget->clear();
         m_breadcrumb->setRootAndCurrent(nullptr, nullptr);
@@ -375,16 +424,37 @@ void MainWindow::onScanError(const QString& message) {
     QMessageBox::critical(this, QStringLiteral("Scan Error"), message);
 }
 
+void MainWindow::setVisualizerView(int index) {
+    m_visStack->setCurrentIndex(index);
+    m_btnTreemapView->setChecked(index == 0);
+    m_btnSunburstView->setChecked(index == 1);
+
+    // Synchronize roots and selections between visualizers
+    if (index == 0 && m_sunburstWidget->currentRoot()) {
+        m_treemapWidget->zoomIn(m_sunburstWidget->currentRoot());
+        if (m_sunburstWidget->selectedNode()) {
+            m_treemapWidget->selectNode(m_sunburstWidget->selectedNode());
+        }
+    } else if (index == 1 && m_treemapWidget->currentRoot()) {
+        m_sunburstWidget->zoomIn(m_treemapWidget->currentRoot());
+        if (m_treemapWidget->selectedNode()) {
+            m_sunburstWidget->selectNode(m_treemapWidget->selectedNode());
+        }
+    }
+}
+
 void MainWindow::onTreeSelectionChanged(const QModelIndex& current, const QModelIndex& /*previous*/) {
     if (!current.isValid()) return;
     DiskNode* node = m_treeModel->nodeForIndex(current);
     if (node) {
         m_treemapWidget->selectNode(node);
+        m_sunburstWidget->selectNode(node);
     }
 }
 
 void MainWindow::onTreemapNodeSelected(DiskNode* node) {
     if (!node) return;
+    m_sunburstWidget->selectNode(node);
     QModelIndex idx = m_treeModel->indexForNode(node);
     if (idx.isValid()) {
         m_treeView->setCurrentIndex(idx);
@@ -395,12 +465,43 @@ void MainWindow::onTreemapNodeSelected(DiskNode* node) {
 void MainWindow::onTreemapNodeDoubleClicked(DiskNode* node) {
     if (!node) return;
     if (node->isDirectory()) {
+        m_sunburstWidget->zoomIn(node);
         m_breadcrumb->setRootAndCurrent(m_rootNode.get(), node);
     }
 }
 
 void MainWindow::onTreemapRootChanged(DiskNode* newRoot) {
     if (m_rootNode && newRoot) {
+        if (m_sunburstWidget->currentRoot() != newRoot) {
+            m_sunburstWidget->zoomIn(newRoot);
+        }
+        m_breadcrumb->setRootAndCurrent(m_rootNode.get(), newRoot);
+    }
+}
+
+void MainWindow::onSunburstNodeSelected(DiskNode* node) {
+    if (!node) return;
+    m_treemapWidget->selectNode(node);
+    QModelIndex idx = m_treeModel->indexForNode(node);
+    if (idx.isValid()) {
+        m_treeView->setCurrentIndex(idx);
+        m_treeView->scrollTo(idx, QAbstractItemView::PositionAtCenter);
+    }
+}
+
+void MainWindow::onSunburstNodeDoubleClicked(DiskNode* node) {
+    if (!node) return;
+    if (node->isDirectory()) {
+        m_treemapWidget->zoomIn(node);
+        m_breadcrumb->setRootAndCurrent(m_rootNode.get(), node);
+    }
+}
+
+void MainWindow::onSunburstRootChanged(DiskNode* newRoot) {
+    if (m_rootNode && newRoot) {
+        if (m_treemapWidget->currentRoot() != newRoot) {
+            m_treemapWidget->zoomIn(newRoot);
+        }
         m_breadcrumb->setRootAndCurrent(m_rootNode.get(), newRoot);
     }
 }
@@ -408,16 +509,19 @@ void MainWindow::onTreemapRootChanged(DiskNode* newRoot) {
 void MainWindow::onBreadcrumbFolderSelected(DiskNode* node) {
     if (node) {
         m_treemapWidget->zoomIn(node);
+        m_sunburstWidget->zoomIn(node);
     }
 }
 
 void MainWindow::onBreadcrumbUpRequested() {
     m_treemapWidget->zoomOut();
+    m_sunburstWidget->zoomOut();
 }
 
 void MainWindow::onBreadcrumbResetRequested() {
     if (m_rootNode) {
         m_treemapWidget->zoomIn(m_rootNode.get());
+        m_sunburstWidget->zoomIn(m_rootNode.get());
     }
 }
 
@@ -430,4 +534,5 @@ void MainWindow::onTopFileSelected(DiskNode* node) {
         m_treeView->scrollTo(idx, QAbstractItemView::PositionAtCenter);
     }
     m_treemapWidget->selectNode(node);
+    m_sunburstWidget->selectNode(node);
 }

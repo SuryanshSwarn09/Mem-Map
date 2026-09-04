@@ -15,9 +15,12 @@
 #include "DiskTreeModel.h"
 #include "SizeBarDelegate.h"
 #include "TreemapWidget.h"
+#include "SunburstWidget.h"
 #include "BreadcrumbWidget.h"
 #include "ExtensionStatsWidget.h"
 #include "TopFilesWidget.h"
+
+class QStackedWidget;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -41,10 +44,14 @@ private slots:
     void onTreemapNodeSelected(DiskNode* node);
     void onTreemapNodeDoubleClicked(DiskNode* node);
     void onTreemapRootChanged(DiskNode* newRoot);
+    void onSunburstNodeSelected(DiskNode* node);
+    void onSunburstNodeDoubleClicked(DiskNode* node);
+    void onSunburstRootChanged(DiskNode* newRoot);
     void onBreadcrumbFolderSelected(DiskNode* node);
     void onBreadcrumbUpRequested();
     void onBreadcrumbResetRequested();
     void onTopFileSelected(DiskNode* node);
+    void setVisualizerView(int index);
 
 private:
     void setupUi();
@@ -65,7 +72,14 @@ private:
     DiskTreeModel* m_treeModel{nullptr};
     ExtensionStatsWidget* m_extStatsWidget{nullptr};
     TopFilesWidget* m_topFilesWidget{nullptr};
+
+    // Visualization Stack & Switcher
+    QWidget* m_visContainer{nullptr};
+    QStackedWidget* m_visStack{nullptr};
     TreemapWidget* m_treemapWidget{nullptr};
+    SunburstWidget* m_sunburstWidget{nullptr};
+    QPushButton* m_btnTreemapView{nullptr};
+    QPushButton* m_btnSunburstView{nullptr};
 
     // Status Bar
     QLabel* m_statusLabel{nullptr};
