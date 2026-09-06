@@ -4,7 +4,7 @@ A high-performance desktop Disk Space & Storage Analyzer for Windows (inspired b
 
 ---
 
-## 🏗️ Architecture & Features Overview
+## Architecture & Features 
 
 ```
 +---------------------------------------------------------------------------------------------------------+
@@ -29,20 +29,20 @@ A high-performance desktop Disk Space & Storage Analyzer for Windows (inspired b
 
 ---
 
-## 🌟 Key Capabilities
+## Key Capabilities
 
-### 1. 🚀 Blazing-Fast Asynchronous Scanner
+### 1. Blazing-Fast Asynchronous Scanner
 - **Multithreaded Traversal**: [`ScannerEngine`](src/core/ScannerEngine.h) runs on a dedicated background worker thread (`QThread`), keeping the UI responsive at 60 FPS without freezing.
 - **Permission Handling**: Skips inaccessible system folders (e.g. `System Volume Information`) cleanly using `std::filesystem::directory_options::skip_permission_denied` and `try/catch` guards.
 - **Loop & Junction Prevention**: Checks Windows attributes for `FILE_ATTRIBUTE_REPARSE_POINT` to prevent infinite recursion cycles caused by NTFS junction points (e.g., `Application Data` → `AppData\Roaming`).
 - **Throttled Signals**: Progress updates are throttled to 60ms intervals to prevent flooding Qt's event loop during high-speed scans (>50,000 files/sec).
 
-### 2. 🌲 Lightweight Memory Tree & Bottom-Up Rollup
+### 2. Lightweight Memory Tree & Bottom-Up Rollup
 - **Cache-Friendly**: [`DiskNode`](src/core/DiskNode.h) provides a minimal memory footprint without heavyweight overhead.
 - **Bottom-Up Size Calculation**: Recursive post-order rollup sums all child file sizes into parent directories.
 - **Automatic Descending Sort**: Children are sorted by size descending to immediately highlight storage hogs.
 
-### 3. 📊 Dual Interactive Visualizers (Treemap & Sunburst)
+### 3. Dual Interactive Visualizers (Treemap & Sunburst)
 - **Squarified Treemap View** ([`TreemapWidget`](src/ui/TreemapWidget.h)):
   - Implements the Bruls, Huizing, and van Wijk Squarified Treemap layout algorithm, maintaining aspect ratios close to 1.0 (avoiding thin, unreadable strips).
   - Cushion / 3D gradient shading with subtle dark separators.
@@ -63,7 +63,7 @@ A high-performance desktop Disk Space & Storage Analyzer for Windows (inspired b
   - **Double-Click**: Drill down into any folder.
   - **Right-Click Menu**: Open in Windows File Explorer or copy full path.
 
-### 4. 📑 Comprehensive Exporting & Reports
+### 4. Comprehensive Exporting & Reports
 - **Standalone Offline HTML5 Report (`.html`)** ([`ReportExporter`](src/core/ReportExporter.h)):
   - **100% Self-Contained**: Zero external CDN scripts, stylesheets, or internet dependencies; works completely offline.
   - **Embedded Canvas Treemap**: Interactive client-side treemap with hover tooltips, click-to-drill-down, and zoom-out controls.
@@ -74,7 +74,7 @@ A high-performance desktop Disk Space & Storage Analyzer for Windows (inspired b
 - **Raw Tree Export (`.json`)**:
   - Serializes the entire hierarchical tree structure and scan metrics.
 
-### 5. 💾 Disk Snapshot Comparison (Diff View)
+### 5. Disk Snapshot Comparison (Diff View)
 - **`.mmap` File Persistence** ([`SnapshotEngine`](src/core/SnapshotEngine.h)):
   - Save any scan as a snapshot file capturing the timestamp, root path, and full tree hierarchy.
 - **Tree Diffing Algorithm**:
@@ -86,7 +86,7 @@ A high-performance desktop Disk Space & Storage Analyzer for Windows (inspired b
   - **Filter Controls**: `[ All Changes ]`, `[ 📈 Growth (+) ]`, `[ 📉 Freed Space (-) ]`, `[ ✨ Added ]`, `[ 🗑 Deleted ]`, plus live text search.
   - **Color-Coded Hierarchy**: Tree showing Name, Net Change, Current Size, Baseline Size, Status, and Path.
 
-### 6. 🧭 Navigation & Analytics Tabs
+### 6. Navigation & Analytics Tabs
 - **Directory Tree**: QTreeView with custom capacity bars ([`SizeBarDelegate`](src/ui/SizeBarDelegate.h)).
 - **Breadcrumb Navigation**: Clickable path segments with **Up** (`▲`) and **Root** (`🏠`) buttons ([`BreadcrumbWidget`](src/ui/BreadcrumbWidget.h)).
 - **File Types Breakdown**: Color badges, file counts, and share percentages ([`ExtensionStatsWidget`](src/ui/ExtensionStatsWidget.h)).
@@ -126,7 +126,7 @@ E:\Mem-scan\
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Component | Technology | Rationale |
 | :--- | :--- | :--- |
@@ -137,7 +137,7 @@ E:\Mem-scan\
 
 ---
 
-## 🚀 Quick Launch & Build
+## Quick Launch & Build
 
 ### Running the Application
 Double-click [`run.bat`](run.bat) or run from PowerShell:
