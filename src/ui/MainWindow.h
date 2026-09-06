@@ -19,6 +19,7 @@
 #include "BreadcrumbWidget.h"
 #include "ExtensionStatsWidget.h"
 #include "TopFilesWidget.h"
+#include "SnapshotDiffWidget.h"
 
 class QStackedWidget;
 
@@ -53,6 +54,14 @@ private slots:
     void onTopFileSelected(DiskNode* node);
     void setVisualizerView(int index);
 
+    // Export & Snapshot slots
+    void onExportHtmlClicked();
+    void onExportCsvClicked();
+    void onExportJsonClicked();
+    void onSaveSnapshotClicked();
+    void onCompareWithSnapshotClicked();
+    void onCompareTwoSnapshotsClicked();
+
 private:
     void setupUi();
     void applyDarkTheme();
@@ -63,6 +72,8 @@ private:
     QPushButton* m_btnBrowse{nullptr};
     QPushButton* m_btnScan{nullptr};
     QPushButton* m_btnCancel{nullptr};
+    QPushButton* m_btnExport{nullptr};
+    QPushButton* m_btnSnapshot{nullptr};
     BreadcrumbWidget* m_breadcrumb{nullptr};
 
     // Central Splitter & Views
@@ -72,6 +83,7 @@ private:
     DiskTreeModel* m_treeModel{nullptr};
     ExtensionStatsWidget* m_extStatsWidget{nullptr};
     TopFilesWidget* m_topFilesWidget{nullptr};
+    SnapshotDiffWidget* m_snapshotDiffWidget{nullptr};
 
     // Visualization Stack & Switcher
     QWidget* m_visContainer{nullptr};

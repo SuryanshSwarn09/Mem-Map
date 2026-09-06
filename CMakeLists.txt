@@ -22,6 +22,10 @@ set(CORE_SOURCES
     src/core/DiskNode.cpp
     src/core/ScannerEngine.h
     src/core/ScannerEngine.cpp
+    src/core/ReportExporter.h
+    src/core/ReportExporter.cpp
+    src/core/SnapshotEngine.h
+    src/core/SnapshotEngine.cpp
 )
 
 set(UI_SOURCES
@@ -41,6 +45,8 @@ set(UI_SOURCES
     src/ui/TopFilesWidget.cpp
     src/ui/BreadcrumbWidget.h
     src/ui/BreadcrumbWidget.cpp
+    src/ui/SnapshotDiffWidget.h
+    src/ui/SnapshotDiffWidget.cpp
     src/ui/MainWindow.h
     src/ui/MainWindow.cpp
 )

@@ -11,6 +11,9 @@
 #include <QGuiApplication>
 #include <QProcess>
 #include <QStackedWidget>
+#include <QDesktopServices>
+#include "ReportExporter.h"
+#include "SnapshotEngine.h"
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -131,6 +134,32 @@ void MainWindow::setupUi() {
     topBar->addWidget(m_btnBrowse);
     topBar->addWidget(m_btnScan);
     topBar->addWidget(m_btnCancel);
+
+    // Export button with dropdown menu
+    m_btnExport = new QPushButton(QStringLiteral("📑 Export Report ▾"), this);
+    QMenu* exportMenu = new QMenu(m_btnExport);
+    QAction* actHtml = exportMenu->addAction(QStringLiteral("🌐 Interactive HTML Report (.html)..."));
+    QAction* actCsv  = exportMenu->addAction(QStringLiteral("📊 Spreadsheet Data (.csv)..."));
+    QAction* actJson = exportMenu->addAction(QStringLiteral("📄 Raw Tree Data (.json)..."));
+    m_btnExport->setMenu(exportMenu);
+    connect(actHtml, &QAction::triggered, this, &MainWindow::onExportHtmlClicked);
+    connect(actCsv, &QAction::triggered, this, &MainWindow::onExportCsvClicked);
+    connect(actJson, &QAction::triggered, this, &MainWindow::onExportJsonClicked);
+    topBar->addWidget(m_btnExport);
+
+    // Snapshot button with dropdown menu
+    m_btnSnapshot = new QPushButton(QStringLiteral("💾 Snapshot ▾"), this);
+    QMenu* snapshotMenu = new QMenu(m_btnSnapshot);
+    QAction* actSaveSnap = snapshotMenu->addAction(QStringLiteral("💾 Save Current Scan as Snapshot (.mmap)..."));
+    snapshotMenu->addSeparator();
+    QAction* actCompareWith = snapshotMenu->addAction(QStringLiteral("⚖ Compare Current Scan with Snapshot..."));
+    QAction* actCompareTwo  = snapshotMenu->addAction(QStringLiteral("🔄 Compare Two Saved Snapshots..."));
+    m_btnSnapshot->setMenu(snapshotMenu);
+    connect(actSaveSnap, &QAction::triggered, this, &MainWindow::onSaveSnapshotClicked);
+    connect(actCompareWith, &QAction::triggered, this, &MainWindow::onCompareWithSnapshotClicked);
+    connect(actCompareTwo, &QAction::triggered, this, &MainWindow::onCompareTwoSnapshotsClicked);
+    topBar->addWidget(m_btnSnapshot);
+
     topBar->addStretch();
 
     rootLayout->addLayout(topBar);
@@ -172,6 +201,10 @@ void MainWindow::setupUi() {
     // Tab 3: Top Largest Files
     m_topFilesWidget = new TopFilesWidget(this);
     m_tabs->addTab(m_topFilesWidget, QStringLiteral("Top 100 Files"));
+
+    // Tab 4: Snapshot Diff View
+    m_snapshotDiffWidget = new SnapshotDiffWidget(this);
+    m_tabs->addTab(m_snapshotDiffWidget, QStringLiteral("Snapshot Diff"));
 
     // Right Pane: Visualization Container with View Switcher
     m_visContainer = new QWidget(this);
@@ -535,4 +568,142 @@ void MainWindow::onTopFileSelected(DiskNode* node) {
     }
     m_treemapWidget->selectNode(node);
     m_sunburstWidget->selectNode(node);
+}
+
+void MainWindow::onExportHtmlClicked() {
+    if (!m_rootNode) {
+        QMessageBox::warning(this, QStringLiteral("No Scan Data"), QStringLiteral("Please complete a scan before exporting an interactive HTML report."));
+        return;
+    }
+
+    QString defaultName = QStringLiteral("MemMap_Report_%1.html").arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd_HHmmss")));
+    QString filePath = QFileDialog::getSaveFileName(this, QStringLiteral("Export Interactive HTML Report"), defaultName, QStringLiteral("HTML Files (*.html)"));
+    if (filePath.isEmpty()) return;
+
+    QString errorMsg;
+    if (ReportExporter::exportToHtml(m_rootNode.get(), filePath, &errorMsg)) {
+        auto reply = QMessageBox::information(this, QStringLiteral("Export Succeeded"),
+            QStringLiteral("Interactive HTML report successfully generated at:\n%1\n\nWould you like to open it in your browser now?").arg(filePath),
+            QMessageBox::Yes | QMessageBox::No);
+        if (reply == QMessageBox::Yes) {
+            QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
+        }
+    } else {
+        QMessageBox::critical(this, QStringLiteral("Export Failed"), errorMsg);
+    }
+}
+
+void MainWindow::onExportCsvClicked() {
+    if (!m_rootNode) {
+        QMessageBox::warning(this, QStringLiteral("No Scan Data"), QStringLiteral("Please complete a scan before exporting a CSV spreadsheet."));
+        return;
+    }
+
+    QString defaultName = QStringLiteral("MemMap_Scan_%1.csv").arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd_HHmmss")));
+    QString filePath = QFileDialog::getSaveFileName(this, QStringLiteral("Export CSV Spreadsheet"), defaultName, QStringLiteral("CSV Files (*.csv)"));
+    if (filePath.isEmpty()) return;
+
+    QString errorMsg;
+    if (ReportExporter::exportToCsv(m_rootNode.get(), filePath, &errorMsg)) {
+        QMessageBox::information(this, QStringLiteral("Export Succeeded"),
+            QStringLiteral("Scan data successfully exported to CSV:\n%1").arg(filePath));
+    } else {
+        QMessageBox::critical(this, QStringLiteral("Export Failed"), errorMsg);
+    }
+}
+
+void MainWindow::onExportJsonClicked() {
+    if (!m_rootNode) {
+        QMessageBox::warning(this, QStringLiteral("No Scan Data"), QStringLiteral("Please complete a scan before exporting JSON data."));
+        return;
+    }
+
+    QString defaultName = QStringLiteral("MemMap_Scan_%1.json").arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd_HHmmss")));
+    QString filePath = QFileDialog::getSaveFileName(this, QStringLiteral("Export JSON Data"), defaultName, QStringLiteral("JSON Files (*.json)"));
+    if (filePath.isEmpty()) return;
+
+    QString errorMsg;
+    if (ReportExporter::exportToJson(m_rootNode.get(), filePath, &errorMsg)) {
+        QMessageBox::information(this, QStringLiteral("Export Succeeded"),
+            QStringLiteral("Scan tree successfully exported to JSON:\n%1").arg(filePath));
+    } else {
+        QMessageBox::critical(this, QStringLiteral("Export Failed"), errorMsg);
+    }
+}
+
+void MainWindow::onSaveSnapshotClicked() {
+    if (!m_rootNode) {
+        QMessageBox::warning(this, QStringLiteral("No Scan Data"), QStringLiteral("Please complete a scan before saving a snapshot."));
+        return;
+    }
+
+    QString defaultName = QStringLiteral("snapshot_%1.mmap").arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd_HHmmss")));
+    QString filePath = QFileDialog::getSaveFileName(this, QStringLiteral("Save Scan Snapshot"), defaultName, QStringLiteral("Mem-Map Snapshots (*.mmap);;All Files (*.*)"));
+    if (filePath.isEmpty()) return;
+
+    QString errorMsg;
+    if (SnapshotEngine::saveSnapshot(m_rootNode.get(), filePath, &errorMsg)) {
+        QMessageBox::information(this, QStringLiteral("Snapshot Saved"),
+            QStringLiteral("Scan snapshot successfully saved to:\n%1").arg(filePath));
+    } else {
+        QMessageBox::critical(this, QStringLiteral("Save Failed"), errorMsg);
+    }
+}
+
+void MainWindow::onCompareWithSnapshotClicked() {
+    if (!m_rootNode) {
+        QMessageBox::warning(this, QStringLiteral("No Active Scan"), QStringLiteral("Please scan a directory or drive first to compare it against a baseline snapshot."));
+        return;
+    }
+
+    QString filePath = QFileDialog::getOpenFileName(this, QStringLiteral("Select Baseline Snapshot to Compare Against"), QString(), QStringLiteral("Mem-Map Snapshots (*.mmap);;All Files (*.*)"));
+    if (filePath.isEmpty()) return;
+
+    QString errorMsg;
+    auto baselineRoot = SnapshotEngine::loadSnapshot(filePath, &errorMsg);
+    if (!baselineRoot) {
+        QMessageBox::critical(this, QStringLiteral("Failed to Load Snapshot"), errorMsg);
+        return;
+    }
+
+    DiffSummary summary;
+    auto diffRoot = SnapshotEngine::compareTrees(baselineRoot.get(), m_rootNode.get(), summary);
+    if (!diffRoot) {
+        QMessageBox::warning(this, QStringLiteral("Comparison Error"), QStringLiteral("Could not compare the selected snapshot with the current scan."));
+        return;
+    }
+
+    m_snapshotDiffWidget->setDiffData(std::move(diffRoot), summary);
+    m_tabs->setCurrentWidget(m_snapshotDiffWidget);
+}
+
+void MainWindow::onCompareTwoSnapshotsClicked() {
+    QString file1 = QFileDialog::getOpenFileName(this, QStringLiteral("Select Baseline (Old) Snapshot"), QString(), QStringLiteral("Mem-Map Snapshots (*.mmap);;All Files (*.*)"));
+    if (file1.isEmpty()) return;
+
+    QString file2 = QFileDialog::getOpenFileName(this, QStringLiteral("Select New Snapshot"), QString(), QStringLiteral("Mem-Map Snapshots (*.mmap);;All Files (*.*)"));
+    if (file2.isEmpty()) return;
+
+    QString errorMsg;
+    auto oldRoot = SnapshotEngine::loadSnapshot(file1, &errorMsg);
+    if (!oldRoot) {
+        QMessageBox::critical(this, QStringLiteral("Failed to Load Baseline Snapshot"), errorMsg);
+        return;
+    }
+
+    auto newRoot = SnapshotEngine::loadSnapshot(file2, &errorMsg);
+    if (!newRoot) {
+        QMessageBox::critical(this, QStringLiteral("Failed to Load New Snapshot"), errorMsg);
+        return;
+    }
+
+    DiffSummary summary;
+    auto diffRoot = SnapshotEngine::compareTrees(oldRoot.get(), newRoot.get(), summary);
+    if (!diffRoot) {
+        QMessageBox::warning(this, QStringLiteral("Comparison Error"), QStringLiteral("Could not compare the snapshots."));
+        return;
+    }
+
+    m_snapshotDiffWidget->setDiffData(std::move(diffRoot), summary);
+    m_tabs->setCurrentWidget(m_snapshotDiffWidget);
 }

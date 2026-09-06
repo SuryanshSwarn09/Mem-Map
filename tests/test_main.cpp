@@ -107,6 +107,104 @@ void testRealDirectoryScan() {
               << DiskNode::formatSize(scannedRoot->size()).toStdString() << std::endl;
 }
 
+#include "core/ReportExporter.h"
+#include "core/SnapshotEngine.h"
+#include <QFile>
+
+void testReportExporter() {
+    std::cout << "[TEST] Running testReportExporter..." << std::endl;
+    auto root = std::make_unique<DiskNode>("test_root", "C:/test_root", true);
+    auto f1 = std::make_unique<DiskNode>("doc.pdf", "C:/test_root/doc.pdf", false);
+    f1->setSize(2048);
+    auto f2 = std::make_unique<DiskNode>("clip.mp4", "C:/test_root/clip.mp4", false);
+    f2->setSize(8192);
+    root->addChild(std::move(f1));
+    root->addChild(std::move(f2));
+    root->calculateBottomUpSizes();
+
+    QString csvPath = QStringLiteral("test_report.csv");
+    QString jsonPath = QStringLiteral("test_report.json");
+    QString htmlPath = QStringLiteral("test_report.html");
+
+    QString err;
+    assert(ReportExporter::exportToCsv(root.get(), csvPath, &err));
+    assert(QFile::exists(csvPath) && QFile(csvPath).size() > 50);
+
+    assert(ReportExporter::exportToJson(root.get(), jsonPath, &err));
+    assert(QFile::exists(jsonPath) && QFile(jsonPath).size() > 50);
+
+    assert(ReportExporter::exportToHtml(root.get(), htmlPath, &err));
+    assert(QFile::exists(htmlPath) && QFile(htmlPath).size() > 100);
+
+    // Cleanup test files
+    QFile::remove(csvPath);
+    QFile::remove(jsonPath);
+    QFile::remove(htmlPath);
+
+    std::cout << "  -> PASSED! Successfully exported and verified CSV, JSON, and HTML reports." << std::endl;
+}
+
+void testSnapshotEngine() {
+    std::cout << "[TEST] Running testSnapshotEngine..." << std::endl;
+    auto rootOld = std::make_unique<DiskNode>("root", "C:/test", true);
+    auto fileKeep = std::make_unique<DiskNode>("keep.txt", "C:/test/keep.txt", false);
+    fileKeep->setSize(1000);
+    auto fileDelete = std::make_unique<DiskNode>("del.log", "C:/test/del.log", false);
+    fileDelete->setSize(500);
+    auto fileModify = std::make_unique<DiskNode>("mod.dat", "C:/test/mod.dat", false);
+    fileModify->setSize(2000);
+
+    rootOld->addChild(std::move(fileKeep));
+    rootOld->addChild(std::move(fileDelete));
+    rootOld->addChild(std::move(fileModify));
+    rootOld->calculateBottomUpSizes();
+
+    // 1. Test save and load snapshot
+    QString snapPath = QStringLiteral("test_snapshot.mmap");
+    QString err;
+    assert(SnapshotEngine::saveSnapshot(rootOld.get(), snapPath, &err));
+    assert(QFile::exists(snapPath));
+
+    auto loadedRoot = SnapshotEngine::loadSnapshot(snapPath, &err);
+    assert(loadedRoot != nullptr);
+    assert(loadedRoot->size() == 3500);
+    assert(loadedRoot->fileCount() == 3);
+    QFile::remove(snapPath);
+
+    // 2. Test Diff Engine with changes:
+    // keep.txt: unchanged (1000)
+    // del.log: deleted (-500)
+    // mod.dat: modified 2000 -> 3500 (+1500)
+    // added.bin: added (+3000)
+    auto rootNew = std::make_unique<DiskNode>("root", "C:/test", true);
+    auto fileKeep2 = std::make_unique<DiskNode>("keep.txt", "C:/test/keep.txt", false);
+    fileKeep2->setSize(1000);
+    auto fileModify2 = std::make_unique<DiskNode>("mod.dat", "C:/test/mod.dat", false);
+    fileModify2->setSize(3500);
+    auto fileAdded = std::make_unique<DiskNode>("added.bin", "C:/test/added.bin", false);
+    fileAdded->setSize(3000);
+
+    rootNew->addChild(std::move(fileKeep2));
+    rootNew->addChild(std::move(fileModify2));
+    rootNew->addChild(std::move(fileAdded));
+    rootNew->calculateBottomUpSizes();
+
+    DiffSummary summary;
+    auto diffTree = SnapshotEngine::compareTrees(loadedRoot.get(), rootNew.get(), summary);
+
+    assert(diffTree != nullptr);
+    assert(summary.addedCount == 1);
+    assert(summary.deletedCount == 1);
+    assert(summary.modifiedCount == 1);
+    // Net delta = 7500 (new) - 3500 (old) = +4000
+    assert(summary.deltaTotalBytes == 4000);
+
+    std::cout << "  -> PASSED! Snapshot save/load and Tree Diff (Delta: " << summary.deltaTotalBytes 
+              << " bytes, Added: " << summary.addedCount 
+              << ", Deleted: " << summary.deletedCount 
+              << ", Modified: " << summary.modifiedCount << ") verified." << std::endl;
+}
+
 int main(int argc, char* argv[]) {
     QCoreApplication app(argc, argv);
 
@@ -117,6 +215,8 @@ int main(int argc, char* argv[]) {
     testDiskNodeBottomUp();
     testTreemapLayout();
     testRealDirectoryScan();
+    testReportExporter();
+    testSnapshotEngine();
 
     std::cout << "========================================" << std::endl;
     std::cout << "  ALL AUTOMATED UNIT TESTS PASSED!      " << std::endl;
