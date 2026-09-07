@@ -1,5 +1,7 @@
 #include <QApplication>
 #include <QFont>
+#include <QIcon>
+#include <QFileInfo>
 #include "MainWindow.h"
 
 int main(int argc, char* argv[]) {
@@ -13,6 +15,15 @@ int main(int argc, char* argv[]) {
     app.setApplicationDisplayName(QStringLiteral("Mem-Map"));
     app.setApplicationVersion(QStringLiteral("1.0.0"));
     app.setOrganizationName(QStringLiteral("Mem-Map"));
+
+    // Set application window icon for taskbar, Alt+Tab, and title bar
+    QString iconPath = QStringLiteral("resources/app.ico");
+    if (!QFileInfo::exists(iconPath)) {
+        iconPath = app.applicationDirPath() + QStringLiteral("/../resources/app.ico");
+    }
+    if (QFileInfo::exists(iconPath)) {
+        app.setWindowIcon(QIcon(iconPath));
+    }
 
     QFont defaultFont(QStringLiteral("Segoe UI"), 10);
     defaultFont.setStyleHint(QFont::SansSerif);
