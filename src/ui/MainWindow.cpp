@@ -100,6 +100,14 @@ MainWindow::MainWindow(QWidget* parent)
     QShortcut* shortcutAltUp = new QShortcut(QKeySequence(Qt::ALT | Qt::Key_Up), this);
     connect(shortcutAltUp, &QShortcut::activated, this, &MainWindow::onBreadcrumbUpRequested);
 
+    // Global Keyboard Shortcut: Ctrl+O to browse folder
+    QShortcut* shortcutCtrlO = new QShortcut(QKeySequence::Open, this);
+    connect(shortcutCtrlO, &QShortcut::activated, this, [this]() {
+        if (m_btnBrowse && m_btnBrowse->isEnabled()) {
+            onSelectFolderClicked();
+        }
+    });
+
     resize(1200, 800);
 }
 
