@@ -12,6 +12,7 @@
 #include <QProcess>
 #include <QStackedWidget>
 #include <QDesktopServices>
+#include <QShortcut>
 #include "ReportExporter.h"
 #include "SnapshotEngine.h"
 
@@ -83,6 +84,14 @@ MainWindow::MainWindow(QWidget* parent)
 
     // Top files signal
     connect(m_topFilesWidget, &TopFilesWidget::fileSelected, this, &MainWindow::onTopFileSelected);
+
+    // Global Keyboard Shortcut: F5 to re-scan / refresh
+    QShortcut* shortcutF5 = new QShortcut(QKeySequence(Qt::Key_F5), this);
+    connect(shortcutF5, &QShortcut::activated, this, [this]() {
+        if (m_btnScan && m_btnScan->isEnabled()) {
+            onStartScanClicked();
+        }
+    });
 
     resize(1200, 800);
 }
