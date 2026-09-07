@@ -10,7 +10,7 @@ BreadcrumbWidget::BreadcrumbWidget(QWidget* parent)
     m_layout->setSpacing(4);
 
     m_btnUp = new QPushButton(QStringLiteral("▲ Up"), this);
-    m_btnUp->setToolTip(QStringLiteral("Navigate to parent folder"));
+    m_btnUp->setToolTip(QStringLiteral("Navigate to parent folder (Backspace / Alt+Up)"));
     m_btnUp->setEnabled(false);
     m_btnUp->setStyleSheet(QStringLiteral(
         "QPushButton { background-color: #2D333B; border: 1px solid #444C56; border-radius: 4px; padding: 4px 8px; color: #ADBAC7; }"

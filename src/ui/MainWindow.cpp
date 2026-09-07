@@ -150,9 +150,11 @@ void MainWindow::setupUi() {
             this, &MainWindow::onDriveSelected);
 
     m_btnBrowse = new QPushButton(QStringLiteral("📁 Browse Folder..."), this);
+    m_btnBrowse->setToolTip(QStringLiteral("Browse folder to scan (Ctrl+O)"));
     connect(m_btnBrowse, &QPushButton::clicked, this, &MainWindow::onSelectFolderClicked);
 
     m_btnScan = new QPushButton(QStringLiteral("⚡ Scan Now"), this);
+    m_btnScan->setToolTip(QStringLiteral("Start scanning selected target (F5)"));
     m_btnScan->setStyleSheet(QStringLiteral(
         "QPushButton { background-color: #238636; color: #FFFFFF; font-weight: bold; border-radius: 6px; padding: 6px 16px; border: 1px solid #2EA043; }"
         "QPushButton:hover { background-color: #2EA043; }"
@@ -161,6 +163,7 @@ void MainWindow::setupUi() {
     connect(m_btnScan, &QPushButton::clicked, this, &MainWindow::onStartScanClicked);
 
     m_btnCancel = new QPushButton(QStringLiteral("✖ Cancel"), this);
+    m_btnCancel->setToolTip(QStringLiteral("Cancel ongoing scan"));
     m_btnCancel->setEnabled(false);
     m_btnCancel->setStyleSheet(QStringLiteral(
         "QPushButton { background-color: #DA3633; color: #FFFFFF; font-weight: bold; border-radius: 6px; padding: 6px 14px; border: 1px solid #F85149; }"
@@ -177,8 +180,10 @@ void MainWindow::setupUi() {
 
     // Export button with dropdown menu
     m_btnExport = new QPushButton(QStringLiteral("📑 Export Report ▾"), this);
+    m_btnExport->setToolTip(QStringLiteral("Export scan report or raw data (Ctrl+E for HTML)"));
     QMenu* exportMenu = new QMenu(m_btnExport);
     QAction* actHtml = exportMenu->addAction(QStringLiteral("🌐 Interactive HTML Report (.html)..."));
+    actHtml->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_E));
     QAction* actCsv  = exportMenu->addAction(QStringLiteral("📊 Spreadsheet Data (.csv)..."));
     QAction* actJson = exportMenu->addAction(QStringLiteral("📄 Raw Tree Data (.json)..."));
     m_btnExport->setMenu(exportMenu);
@@ -189,8 +194,10 @@ void MainWindow::setupUi() {
 
     // Snapshot button with dropdown menu
     m_btnSnapshot = new QPushButton(QStringLiteral("💾 Snapshot ▾"), this);
+    m_btnSnapshot->setToolTip(QStringLiteral("Save or compare disk snapshots (Ctrl+S to save)"));
     QMenu* snapshotMenu = new QMenu(m_btnSnapshot);
     QAction* actSaveSnap = snapshotMenu->addAction(QStringLiteral("💾 Save Current Scan as Snapshot (.mmap)..."));
+    actSaveSnap->setShortcut(QKeySequence::Save);
     snapshotMenu->addSeparator();
     QAction* actCompareWith = snapshotMenu->addAction(QStringLiteral("⚖ Compare Current Scan with Snapshot..."));
     QAction* actCompareTwo  = snapshotMenu->addAction(QStringLiteral("🔄 Compare Two Saved Snapshots..."));
