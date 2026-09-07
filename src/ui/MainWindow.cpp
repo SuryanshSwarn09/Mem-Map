@@ -93,6 +93,13 @@ MainWindow::MainWindow(QWidget* parent)
         }
     });
 
+    // Global Keyboard Shortcut: Backspace and Alt+Up to navigate up one folder level
+    QShortcut* shortcutBack = new QShortcut(QKeySequence(Qt::Key_Backspace), this);
+    connect(shortcutBack, &QShortcut::activated, this, &MainWindow::onBreadcrumbUpRequested);
+
+    QShortcut* shortcutAltUp = new QShortcut(QKeySequence(Qt::ALT | Qt::Key_Up), this);
+    connect(shortcutAltUp, &QShortcut::activated, this, &MainWindow::onBreadcrumbUpRequested);
+
     resize(1200, 800);
 }
 
