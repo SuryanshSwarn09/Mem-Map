@@ -108,6 +108,14 @@ MainWindow::MainWindow(QWidget* parent)
         }
     });
 
+    // Global Keyboard Shortcut: Ctrl+S to save disk snapshot
+    QShortcut* shortcutCtrlS = new QShortcut(QKeySequence::Save, this);
+    connect(shortcutCtrlS, &QShortcut::activated, this, [this]() {
+        if (m_btnSnapshot && m_btnSnapshot->isEnabled()) {
+            onSaveSnapshotClicked();
+        }
+    });
+
     resize(1200, 800);
 }
 
