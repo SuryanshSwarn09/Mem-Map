@@ -92,6 +92,19 @@ A high-performance desktop Disk Space & Storage Analyzer for Windows (inspired b
 - **File Types Breakdown**: Color badges, file counts, and share percentages ([`ExtensionStatsWidget`](src/ui/ExtensionStatsWidget.h)).
 - **Top 100 Largest Files**: Ranked table of the biggest space hogs for immediate disk cleanup ([`TopFilesWidget`](src/ui/TopFilesWidget.h)).
 
+### 7. Keyboard Navigation & Windows Shell Polish
+- **Global Keyboard Shortcuts**:
+  | Shortcut | Action | Description |
+  | :--- | :--- | :--- |
+  | **`F5`** | **Scan / Refresh** | Re-scans the currently selected drive or directory target. |
+  | **`Backspace`** / **`Alt + Up`** | **Navigate Up** | Zooms out to parent folder, matching standard Windows Explorer behavior. |
+  | **`Ctrl + O`** | **Browse Folder** | Opens the native directory picker dialog. |
+  | **`Ctrl + S`** | **Save Snapshot** | Quickly saves current scan to a portable `.mmap` snapshot. |
+  | **`Ctrl + E`** | **Export HTML** | Quickly generates and opens a standalone interactive HTML5 report. |
+- **Native Windows PE Icon Resource**:
+  - Embedded multi-resolution `.ico` icon (`16x16`, `32x32`, `48x48`, `64x64`, `128x128`, `256x256`) compiled directly into `Mem-Map.exe` via Windows PE resource script ([`resources/app.rc`](resources/app.rc)).
+  - Branded display across Windows Explorer, Taskbar, window title bar, and `Alt + Tab` switcher.
+
 ---
 
 ## Development Evolution: From 0 to Now
@@ -154,6 +167,10 @@ The following breakdown details the engineering progression from the initial con
 - **Automated Test Expansion**:
   - Added test suites 4 and 5 in [`test_main.cpp`](tests/test_main.cpp) to validate report exporting and snapshot diff operations in CI/local runs.
 
+### Phase 5: Keyboard Navigation & Native Windows Icon Resource
+- **Global Keyboard Navigation**: Added standard navigation shortcuts (`F5`, `Backspace`, `Alt+Up`, `Ctrl+O`, `Ctrl+S`, `Ctrl+E`) wired to core actions with live tooltip shortcut badges.
+- **Native Icon & PE Resource**: Designed and generated multi-resolution [`resources/app.ico`](resources/app.ico) (16x16 to 256x256), created [`resources/app.rc`](resources/app.rc), and configured CMake to embed the icon directly into the Windows executable PE header and application window.
+
 ---
 
 ## 📁 Project Structure
@@ -164,6 +181,11 @@ E:\Mem-scan\
 ├── README.md                   # Project documentation
 ├── run.bat                     # One-click launcher script
 ├── .gitignore                  # Git ignore rules (build artifacts, binaries)
+├── resources\                  # Application assets & Windows PE resources
+│   ├── app.ico                 # Multi-resolution application icon (16x16 - 256x256)
+│   └── app.rc                  # Windows resource script for PE icon embedding
+├── tools\
+│   └── generate_icon.py        # Reproducible multi-size icon generator
 ├── src\
 │   ├── main.cpp                # Application entry point & High-DPI scaling
 │   ├── core\
