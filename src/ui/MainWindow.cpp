@@ -116,6 +116,14 @@ MainWindow::MainWindow(QWidget* parent)
         }
     });
 
+    // Global Keyboard Shortcut: Ctrl+E to export HTML report
+    QShortcut* shortcutCtrlE = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_E), this);
+    connect(shortcutCtrlE, &QShortcut::activated, this, [this]() {
+        if (m_btnExport && m_btnExport->isEnabled()) {
+            onExportHtmlClicked();
+        }
+    });
+
     resize(1200, 800);
 }
 
