@@ -51,10 +51,16 @@ set(UI_SOURCES
     src/ui/MainWindow.cpp
 )
 
+set(PLATFORM_SOURCES "")
+if(WIN32)
+    set(PLATFORM_SOURCES resources/app.rc)
+endif()
+
 add_executable(Mem-Map
     src/main.cpp
     ${CORE_SOURCES}
     ${UI_SOURCES}
+    ${PLATFORM_SOURCES}
 )
 
 target_include_directories(Mem-Map PRIVATE
