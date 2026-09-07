@@ -147,7 +147,7 @@ The following breakdown details the engineering progression from the initial con
   - Engineered a recursive tree diffing algorithm that compares two scan trees and categorizes every node as **Added**, **Deleted**, **Modified**, or **Unchanged**, calculating exact signed byte deltas (`deltaBytes = newSize - oldSize`).
 - **Snapshot Diff Dashboard ([`SnapshotDiffWidget`](src/ui/SnapshotDiffWidget.h))**:
   - Introduced a dedicated Diff comparison tab with a prominent KPI Net Change banner (Red `+XX GB` for storage growth, Green `-XX GB` for freed space).
-  - Built filter buttons (`[ All Changes ]`, `[ 📈 Growth (+) ]`, `[ 📉 Freed Space (-) ]`, `[ ✨ Added ]`, `[ 🗑 Deleted ]`) and real-time text search.
+  - Built filter buttons (`[ All Changes ]`, `[ 📈 Growth (+) ]`, `[ 📉 Freed Space (-) ]`, `[ Added ]`, `[ 🗑 Deleted ]`) and real-time text search.
   - Created a color-coded hierarchical diff tree displaying item names, net changes, current sizes, baseline sizes, status flags, and paths.
 - **Toolbar Popup Menus**:
   - Integrated "Export Report ▾" and "Snapshot ▾" popup menus directly into the main toolbar.
@@ -156,7 +156,7 @@ The following breakdown details the engineering progression from the initial con
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 E:\Mem-scan\
