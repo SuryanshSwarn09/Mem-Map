@@ -94,7 +94,69 @@ A high-performance desktop Disk Space & Storage Analyzer for Windows (inspired b
 
 ---
 
-## 📁 Project Structure
+## Development Evolution: From 0 to Now
+
+The following breakdown details the engineering progression from the initial concept (0) to the current full-featured release:
+
+### Phase 0: Foundations & Toolchain Setup
+- **Objective**: Establish a modern, native Windows C++ toolchain for high execution speed and low memory overhead without bulky runtime runtimes.
+- **Environment**: Configured MSYS2 UCRT64 with GCC 13.2, CMake 3.28, Ninja 1.11, and Qt 6.6.1 Base (`Core`, `Gui`, `Widgets`).
+- **Build Infrastructure**: Engineered [`CMakeLists.txt`](CMakeLists.txt) with C++20 standard requirements, automated Qt MOC/UIC/RCC pipelines, and created [`run.bat`](run.bat) to streamline runtime path injection.
+
+### Phase 1: Core Engine & Initial Desktop Application
+- **Hierarchical Memory Tree ([`DiskNode`](src/core/DiskNode.h))**:
+  - Designed an n-ary tree node structure storing name, path, cumulative byte size, child pointers, parent link, and categorized file type.
+  - Implemented recursive post-order traversal rollup to compute parent folder sizes strictly from the bottom up.
+  - Added automatic descending sorting so the largest disk hogs always surface to the top of lists.
+- **Asynchronous Scanner ([`ScannerEngine`](src/core/ScannerEngine.h))**:
+  - Implemented a multithreaded worker model utilizing `QThread` to ensure UI rendering remains at 60 FPS during intensive disk I/O.
+  - Handled locked/protected directories using `std::filesystem::directory_options::skip_permission_denied` with exception fallbacks.
+  - Added Windows API detection of `FILE_ATTRIBUTE_REPARSE_POINT` to prevent cyclic infinite loops through NTFS junctions.
+  - Throttled progress signals to 60ms intervals to prevent flooding the Qt event loop.
+- **Initial UI & Treemap Visualizer ([`MainWindow`](src/ui/MainWindow.h), [`TreemapWidget`](src/ui/TreemapWidget.h))**:
+  - Crafted a modern dark theme interface using Qt Style Sheets (QSS) with a collapsible `QSplitter` layout.
+  - Implemented the Bruls, Huizing, and van Wijk (2000) squarified treemap layout algorithm in [`TreemapLayout`](src/ui/TreemapLayout.h) to maintain aspect ratios near 1.0.
+  - Built custom `QPainter` treemap rendering with 3D cushion gradients, hover tooltips, double-click folder drilling, and context menus for Windows Explorer actions.
+  - Integrated [`DiskTreeModel`](src/ui/DiskTreeModel.h) with custom percentage capacity bars ([`SizeBarDelegate`](src/ui/SizeBarDelegate.h)).
+  - Added breadcrumb navigation ([`BreadcrumbWidget`](src/ui/BreadcrumbWidget.h)), file extension breakdown ([`ExtensionStatsWidget`](src/ui/ExtensionStatsWidget.h)), and top 100 space hogs ([`TopFilesWidget`](src/ui/TopFilesWidget.h)).
+- **Unit Test Foundation ([`test_main.cpp`](tests/test_main.cpp))**:
+  - Created automated test suites for bottom-up size calculations, treemap layout geometry, and real filesystem scanning.
+
+### Phase 2: Dual Visualizer & DaisyDisk-Style Sunburst Chart
+- **Objective**: Provide an alternative radial visual perspective to complement the rectangular treemap.
+- **Sunburst Visualizer ([`SunburstWidget`](src/ui/SunburstWidget.h))**:
+  - Developed a multi-layered concentric annular ring chart partitioning $[0, 360^\circ]$ based on relative directory weight up to 4 levels deep.
+  - Implemented polar coordinate math ($r, \theta$) for hit-testing mouse interactions, tooltips, and drill-downs.
+  - Created an interactive center hub displaying the current root folder name, total size, and serving as a single-click "Zoom Out" control.
+- **View Switcher Toolbar**:
+  - Added a segmented view toggle (`[ ▦ Treemap ]` vs `[ 🔘 Sunburst ]`) synchronized via `QStackedWidget` with shared breadcrumb state.
+
+### Phase 3: Project Rebranding to "Mem-Map"
+- **Objective**: Shift from a generic utility moniker to an identifiable, dedicated brand.
+- **Changes**:
+  - Renamed the project, CMake compilation targets, binary output (`Mem-Map.exe`), window titles, and repository documentation to **Mem-Map**.
+  - Updated all launcher scripts and test runners.
+
+### Phase 4: Exporting, Standalone Reports & Snapshot Diff View
+- **Exporting & Reporting Suite ([`ReportExporter`](src/core/ReportExporter.h))**:
+  - **Standalone Offline HTML5 Report**: Generates a 100% self-contained, zero-dependency HTML file with an embedded HTML5 `<canvas>` squarified treemap, interactive tooltips, click drill-down, summary KPI cards, extension charts, and top 50 files.
+  - **CSV Export**: Generates spreadsheet data prepended with UTF-8 BOM (`\xEF\xBB\xBF`) for seamless loading into Microsoft Excel on Windows.
+  - **JSON Export**: Serializes the full hierarchical tree for external data analysis.
+- **Disk Snapshot Comparison ([`SnapshotEngine`](src/core/SnapshotEngine.h))**:
+  - Added `.mmap` JSON snapshot save/load functionality with scan metadata (timestamp, root path, file count, total size).
+  - Engineered a recursive tree diffing algorithm that compares two scan trees and categorizes every node as **Added**, **Deleted**, **Modified**, or **Unchanged**, calculating exact signed byte deltas (`deltaBytes = newSize - oldSize`).
+- **Snapshot Diff Dashboard ([`SnapshotDiffWidget`](src/ui/SnapshotDiffWidget.h))**:
+  - Introduced a dedicated Diff comparison tab with a prominent KPI Net Change banner (Red `+XX GB` for storage growth, Green `-XX GB` for freed space).
+  - Built filter buttons (`[ All Changes ]`, `[ 📈 Growth (+) ]`, `[ 📉 Freed Space (-) ]`, `[ ✨ Added ]`, `[ 🗑 Deleted ]`) and real-time text search.
+  - Created a color-coded hierarchical diff tree displaying item names, net changes, current sizes, baseline sizes, status flags, and paths.
+- **Toolbar Popup Menus**:
+  - Integrated "Export Report ▾" and "Snapshot ▾" popup menus directly into the main toolbar.
+- **Automated Test Expansion**:
+  - Added test suites 4 and 5 in [`test_main.cpp`](tests/test_main.cpp) to validate report exporting and snapshot diff operations in CI/local runs.
+
+---
+
+## Project Structure
 
 ```
 E:\Mem-scan\
