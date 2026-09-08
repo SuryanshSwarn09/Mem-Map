@@ -40,6 +40,7 @@ private:
     void relayout();
     TreemapTile* tileAt(const QPointF& pos);
     void renderTreemap(QPainter* painter, const QRectF& bounds);
+    QPixmap captureCurrentView();
     void setupAnimation();
 
     DiskNode* m_dataRoot{nullptr};     // Root of the whole scan

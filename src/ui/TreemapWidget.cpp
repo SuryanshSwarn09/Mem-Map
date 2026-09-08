@@ -100,6 +100,19 @@ void TreemapWidget::setupAnimation() {
     });
 }
 
+QPixmap TreemapWidget::captureCurrentView() {
+    if (width() <= 0 || height() <= 0) return QPixmap();
+    QPixmap pixmap(size());
+    pixmap.fill(QColor(24, 25, 29));
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::TextAntialiasing, true);
+    if (m_currentRoot && !m_tiles.empty()) {
+        renderTreemap(&painter, rect());
+    }
+    return pixmap;
+}
+
 void TreemapWidget::renderTreemap(QPainter* painter, const QRectF& bounds) {
     Q_UNUSED(bounds);
     QFont labelFont = font();
