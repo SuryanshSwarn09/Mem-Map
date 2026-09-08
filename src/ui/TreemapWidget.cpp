@@ -75,12 +75,45 @@ void TreemapWidget::zoomIn(DiskNode* node) {
 
 void TreemapWidget::zoomOut() {
     if (!m_currentRoot || m_currentRoot == m_dataRoot) return;
-    if (m_currentRoot->parent()) {
-        m_currentRoot = m_currentRoot->parent();
+    DiskNode* parentNode = m_currentRoot->parent();
+    if (!parentNode) return;
+
+    if (width() <= 0 || height() <= 0) {
+        m_currentRoot = parentNode;
+        m_selectedNode = nullptr;
+        m_hoveredNode = nullptr;
         relayout();
         update();
         emit currentRootChanged(m_currentRoot);
+        return;
     }
+
+    if (m_zoomAnim->state() == QAbstractAnimation::Running) {
+        m_zoomAnim->stop();
+    }
+
+    DiskNode* exitingChild = m_currentRoot;
+    m_prevPixmap = captureCurrentView();
+
+    m_currentRoot = parentNode;
+    m_selectedNode = nullptr;
+    m_hoveredNode = nullptr;
+    relayout();
+
+    QRectF destRect = findTileRectForNode(exitingChild);
+    if (destRect.isEmpty()) {
+        destRect = QRectF(width() * 0.25, height() * 0.25, width() * 0.5, height() * 0.5);
+    }
+    m_targetTileRect = destRect;
+    m_isZoomIn = false;
+
+    m_nextPixmap = captureCurrentView();
+
+    m_isAnimating = true;
+    m_animProgress = 0.0;
+    m_zoomAnim->start();
+
+    emit currentRootChanged(m_currentRoot);
 }
 
 void TreemapWidget::selectNode(DiskNode* node) {
