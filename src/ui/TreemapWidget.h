@@ -6,6 +6,8 @@
 #include "TreemapLayout.h"
 #include "DiskNode.h"
 
+class QVariantAnimation;
+
 class TreemapWidget : public QWidget {
     Q_OBJECT
 
@@ -37,6 +39,8 @@ protected:
 private:
     void relayout();
     TreemapTile* tileAt(const QPointF& pos);
+    void renderTreemap(QPainter* painter, const QRectF& bounds);
+    void setupAnimation();
 
     DiskNode* m_dataRoot{nullptr};     // Root of the whole scan
     DiskNode* m_currentRoot{nullptr};  // Currently zoomed directory
@@ -45,4 +49,13 @@ private:
 
     std::vector<TreemapTile> m_tiles;
     int m_maxDepth{2};
+
+    // Animation state
+    QVariantAnimation* m_zoomAnim{nullptr};
+    qreal m_animProgress{1.0};
+    bool m_isAnimating{false};
+    bool m_isZoomIn{true};
+    QRectF m_targetTileRect;
+    QPixmap m_prevPixmap;
+    QPixmap m_nextPixmap;
 };
