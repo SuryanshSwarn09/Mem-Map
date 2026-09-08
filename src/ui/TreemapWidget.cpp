@@ -24,6 +24,13 @@ TreemapWidget::TreemapWidget(QWidget* parent)
 }
 
 void TreemapWidget::setRootNode(DiskNode* rootNode) {
+    if (m_zoomAnim && m_zoomAnim->state() == QAbstractAnimation::Running) {
+        m_zoomAnim->stop();
+    }
+    m_isAnimating = false;
+    m_prevPixmap = QPixmap();
+    m_nextPixmap = QPixmap();
+
     m_dataRoot = rootNode;
     m_currentRoot = rootNode;
     m_selectedNode = nullptr;
@@ -144,6 +151,12 @@ TreemapTile* TreemapWidget::tileAt(const QPointF& pos) {
 
 void TreemapWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
+    if (m_zoomAnim && m_zoomAnim->state() == QAbstractAnimation::Running) {
+        m_zoomAnim->stop();
+    }
+    m_isAnimating = false;
+    m_prevPixmap = QPixmap();
+    m_nextPixmap = QPixmap();
     relayout();
 }
 
