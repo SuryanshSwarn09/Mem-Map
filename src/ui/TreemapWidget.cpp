@@ -34,10 +34,42 @@ void TreemapWidget::setRootNode(DiskNode* rootNode) {
 }
 
 void TreemapWidget::zoomIn(DiskNode* node) {
-    if (!node || !node->isDirectory()) return;
+    if (!node || !node->isDirectory() || node == m_currentRoot) return;
+
+    if (width() <= 0 || height() <= 0) {
+        m_currentRoot = node;
+        m_selectedNode = nullptr;
+        m_hoveredNode = nullptr;
+        relayout();
+        update();
+        emit currentRootChanged(m_currentRoot);
+        return;
+    }
+
+    if (m_zoomAnim->state() == QAbstractAnimation::Running) {
+        m_zoomAnim->stop();
+    }
+
+    QRectF tileRect = findTileRectForNode(node);
+    if (tileRect.isEmpty()) {
+        tileRect = QRectF(width() * 0.25, height() * 0.25, width() * 0.5, height() * 0.5);
+    }
+
+    m_prevPixmap = captureCurrentView();
+    m_targetTileRect = tileRect;
+    m_isZoomIn = true;
+
     m_currentRoot = node;
+    m_selectedNode = nullptr;
+    m_hoveredNode = nullptr;
     relayout();
-    update();
+
+    m_nextPixmap = captureCurrentView();
+
+    m_isAnimating = true;
+    m_animProgress = 0.0;
+    m_zoomAnim->start();
+
     emit currentRootChanged(m_currentRoot);
 }
 
