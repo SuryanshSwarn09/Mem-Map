@@ -46,6 +46,7 @@ A high-performance desktop Disk Space & Storage Analyzer for Windows (inspired b
 - **Squarified Treemap View** ([`TreemapWidget`](src/ui/TreemapWidget.h)):
   - Implements the Bruls, Huizing, and van Wijk Squarified Treemap layout algorithm, maintaining aspect ratios close to 1.0 (avoiding thin, unreadable strips).
   - Cushion / 3D gradient shading with subtle dark separators.
+  - **Hardware-Accelerated Smooth Zoom Animation**: Utilizes `QVariantAnimation` with `QEasingCurve::OutCubic` over 280ms to smoothly expand or contract tile geometry with dual-buffer pixmap cross-fading, eliminating abrupt visual snapping when drilling down or ascending.
 - **DaisyDisk-Style Sunburst View** ([`SunburstWidget`](src/ui/SunburstWidget.h)):
   - Multi-layered concentric annular rings partitioning $[0, 360^\circ]$ based on relative directory size up to 4 levels deep.
   - Interactive center core displaying active folder name, total size, and acting as a click-to-zoom-out button.
@@ -170,6 +171,12 @@ The following breakdown details the engineering progression from the initial con
 ### Phase 5: Keyboard Navigation & Native Windows Icon Resource
 - **Global Keyboard Navigation**: Added standard navigation shortcuts (`F5`, `Backspace`, `Alt+Up`, `Ctrl+O`, `Ctrl+S`, `Ctrl+E`) wired to core actions with live tooltip shortcut badges.
 - **Native Icon & PE Resource**: Designed and generated multi-resolution [`resources/app.ico`](resources/app.ico) (16x16 to 256x256), created [`resources/app.rc`](resources/app.rc), and configured CMake to embed the icon directly into the Windows executable PE header and application window.
+
+### Phase 6: Treemap Smooth Zoom Animation
+- **Hardware-Accelerated Fluid Zooming**: Eliminated jarring visual snaps by engineering a dual-buffer scaling transition in [`TreemapWidget`](src/ui/TreemapWidget.h) utilizing `QVariantAnimation` with `QEasingCurve::OutCubic` over 280ms.
+- **Sub-Pixel Geometry Interpolation**: Interpolates tile coordinates between source bounds and screen bounds, with synchronized opacity cross-fading.
+- **Event Safety & Interrupt Resilience**: Added input guards to ignore mouse events during transitions, with graceful interruption handling on window resize or re-rooting.
+- **Unit Test Coverage**: Added `testTreemapAnimationGeometry` in [`tests/test_main.cpp`](tests/test_main.cpp) validating interpolation math across all keyframes.
 
 ---
 
