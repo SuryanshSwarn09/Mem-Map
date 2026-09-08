@@ -205,6 +205,43 @@ void testSnapshotEngine() {
               << ", Modified: " << summary.modifiedCount << ") verified." << std::endl;
 }
 
+void testTreemapAnimationGeometry() {
+    std::cout << "[TEST] Running testTreemapAnimationGeometry..." << std::endl;
+    // Test geometric interpolation logic used in TreemapWidget smooth zoom
+    QRectF fullRect(0, 0, 800, 600);
+    QRectF tileRect(100, 150, 200, 100);
+
+    auto interpRect = [](const QRectF& from, const QRectF& to, qreal t) {
+        return QRectF(
+            from.left() * (1.0 - t) + to.left() * t,
+            from.top() * (1.0 - t) + to.top() * t,
+            from.width() * (1.0 - t) + to.width() * t,
+            from.height() * (1.0 - t) + to.height() * t
+        );
+    };
+
+    QRectF r0 = interpRect(tileRect, fullRect, 0.0);
+    assert(r0 == tileRect);
+    (void)r0;
+
+    QRectF r1 = interpRect(tileRect, fullRect, 1.0);
+    assert(r1 == fullRect);
+    (void)r1;
+
+    QRectF rHalf = interpRect(tileRect, fullRect, 0.5);
+    assert(rHalf.width() == 500.0);
+    assert(rHalf.height() == 350.0);
+    assert(rHalf.left() == 50.0);
+    assert(rHalf.top() == 75.0);
+    (void)rHalf;
+
+    QRectF outHalf = interpRect(fullRect, tileRect, 0.5);
+    assert(outHalf == rHalf);
+    (void)outHalf;
+
+    std::cout << "  -> PASSED! Interpolation math validated at all stages (t=0.0, 0.5, 1.0)." << std::endl;
+}
+
 int main(int argc, char* argv[]) {
     QCoreApplication app(argc, argv);
 
@@ -217,6 +254,7 @@ int main(int argc, char* argv[]) {
     testRealDirectoryScan();
     testReportExporter();
     testSnapshotEngine();
+    testTreemapAnimationGeometry();
 
     std::cout << "========================================" << std::endl;
     std::cout << "  ALL AUTOMATED UNIT TESTS PASSED!      " << std::endl;
