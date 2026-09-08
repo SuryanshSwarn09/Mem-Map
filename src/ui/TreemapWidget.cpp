@@ -11,6 +11,8 @@
 #include <QProcess>
 #include <QFileInfo>
 #include <QDir>
+#include <QVariantAnimation>
+#include <QEasingCurve>
 
 TreemapWidget::TreemapWidget(QWidget* parent)
     : QWidget(parent)
@@ -18,6 +20,7 @@ TreemapWidget::TreemapWidget(QWidget* parent)
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
     setAttribute(Qt::WA_OpaquePaintEvent, true);
+    setupAnimation();
 }
 
 void TreemapWidget::setRootNode(DiskNode* rootNode) {
@@ -77,6 +80,29 @@ TreemapTile* TreemapWidget::tileAt(const QPointF& pos) {
 void TreemapWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     relayout();
+}
+
+void TreemapWidget::setupAnimation() {
+    m_zoomAnim = new QVariantAnimation(this);
+    m_zoomAnim->setDuration(280);
+    m_zoomAnim->setStartValue(0.0);
+    m_zoomAnim->setEndValue(1.0);
+    m_zoomAnim->setEasingCurve(QEasingCurve::OutCubic);
+    connect(m_zoomAnim, &QVariantAnimation::valueChanged, this, [this](const QVariant& value) {
+        m_animProgress = value.toReal();
+        update();
+    });
+    connect(m_zoomAnim, &QVariantAnimation::finished, this, [this]() {
+        m_isAnimating = false;
+        m_prevPixmap = QPixmap();
+        m_nextPixmap = QPixmap();
+        update();
+    });
+}
+
+void TreemapWidget::renderTreemap(QPainter* painter, const QRectF& bounds) {
+    Q_UNUSED(painter);
+    Q_UNUSED(bounds);
 }
 
 void TreemapWidget::paintEvent(QPaintEvent* event) {
