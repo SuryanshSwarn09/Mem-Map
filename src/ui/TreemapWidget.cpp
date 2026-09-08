@@ -346,6 +346,11 @@ void TreemapWidget::paintEvent(QPaintEvent* event) {
 }
 
 void TreemapWidget::mouseMoveEvent(QMouseEvent* event) {
+    if (m_isAnimating) {
+        QToolTip::hideText();
+        return;
+    }
+
     QPointF pos = event->position();
     TreemapTile* tile = tileAt(pos);
 
@@ -390,6 +395,8 @@ void TreemapWidget::leaveEvent(QEvent* event) {
 }
 
 void TreemapWidget::mousePressEvent(QMouseEvent* event) {
+    if (m_isAnimating) return;
+
     if (event->button() == Qt::LeftButton) {
         TreemapTile* tile = tileAt(event->position());
         if (tile) {
@@ -401,6 +408,8 @@ void TreemapWidget::mousePressEvent(QMouseEvent* event) {
 }
 
 void TreemapWidget::mouseDoubleClickEvent(QMouseEvent* event) {
+    if (m_isAnimating) return;
+
     if (event->button() == Qt::LeftButton) {
         TreemapTile* tile = tileAt(event->position());
         if (tile && tile->node) {
@@ -413,6 +422,8 @@ void TreemapWidget::mouseDoubleClickEvent(QMouseEvent* event) {
 }
 
 void TreemapWidget::contextMenuEvent(QContextMenuEvent* event) {
+    if (m_isAnimating) return;
+
     TreemapTile* tile = tileAt(event->pos());
     if (!tile || !tile->node) return;
 
