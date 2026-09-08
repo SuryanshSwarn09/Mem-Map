@@ -275,6 +275,65 @@ void TreemapWidget::paintEvent(QPaintEvent* event) {
     // Background
     painter.fillRect(rect(), QColor(24, 25, 29));
 
+    // Handle Active Zoom Animation
+    if (m_isAnimating && !m_prevPixmap.isNull() && !m_nextPixmap.isNull()) {
+        qreal t = m_animProgress;
+        QRectF fullRect = rect();
+        QRectF target = m_targetTileRect;
+        if (target.isEmpty() || target.width() <= 0 || target.height() <= 0) {
+            target = QRectF(width() * 0.25, height() * 0.25, width() * 0.5, height() * 0.5);
+        }
+
+        if (m_isZoomIn) {
+            // Target tile expands from target to fullRect
+            QRectF currentTileRect(
+                target.left() * (1.0 - t) + fullRect.left() * t,
+                target.top() * (1.0 - t) + fullRect.top() * t,
+                target.width() * (1.0 - t) + fullRect.width() * t,
+                target.height() * (1.0 - t) + fullRect.height() * t
+            );
+
+            // Draw outgoing view expanding and fading out
+            qreal scale = currentTileRect.width() / target.width();
+            qreal offsetX = currentTileRect.left() - target.left() * scale;
+            qreal offsetY = currentTileRect.top() - target.top() * scale;
+
+            painter.save();
+            painter.setOpacity(qMax(0.0, 1.0 - t));
+            painter.translate(offsetX, offsetY);
+            painter.scale(scale, scale);
+            painter.drawPixmap(0, 0, m_prevPixmap);
+            painter.restore();
+
+            // Draw incoming view expanding from target to fullRect and fading in
+            painter.save();
+            painter.setOpacity(qMin(1.0, t));
+            painter.drawPixmap(currentTileRect.toRect(), m_nextPixmap);
+            painter.restore();
+        } else {
+            // Target tile shrinks from fullRect down to target
+            QRectF currentChildRect(
+                fullRect.left() * (1.0 - t) + target.left() * t,
+                fullRect.top() * (1.0 - t) + target.top() * t,
+                fullRect.width() * (1.0 - t) + target.width() * t,
+                fullRect.height() * (1.0 - t) + target.height() * t
+            );
+
+            // Draw incoming parent view fading in
+            painter.save();
+            painter.setOpacity(qMin(1.0, t));
+            painter.drawPixmap(fullRect.toRect(), m_nextPixmap);
+            painter.restore();
+
+            // Draw outgoing child view shrinking into target and fading out
+            painter.save();
+            painter.setOpacity(qMax(0.0, 1.0 - t));
+            painter.drawPixmap(currentChildRect.toRect(), m_prevPixmap);
+            painter.restore();
+        }
+        return;
+    }
+
     if (!m_currentRoot || m_tiles.empty()) {
         painter.setPen(QColor(130, 140, 155));
         painter.drawText(rect(), Qt::AlignCenter, 
