@@ -113,6 +113,26 @@ QPixmap TreemapWidget::captureCurrentView() {
     return pixmap;
 }
 
+QRectF TreemapWidget::findTileRectForNode(DiskNode* node) const {
+    if (!node) return QRectF();
+    for (const auto& tile : m_tiles) {
+        if (tile.node == node) {
+            return tile.rect;
+        }
+    }
+    // Ancestor fallback
+    for (const auto& tile : m_tiles) {
+        DiskNode* curr = node;
+        while (curr) {
+            if (tile.node == curr) {
+                return tile.rect;
+            }
+            curr = curr->parent();
+        }
+    }
+    return QRectF();
+}
+
 void TreemapWidget::renderTreemap(QPainter* painter, const QRectF& bounds) {
     Q_UNUSED(bounds);
     QFont labelFont = font();

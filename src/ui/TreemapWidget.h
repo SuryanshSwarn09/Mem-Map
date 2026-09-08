@@ -41,6 +41,7 @@ private:
     TreemapTile* tileAt(const QPointF& pos);
     void renderTreemap(QPainter* painter, const QRectF& bounds);
     QPixmap captureCurrentView();
+    QRectF findTileRectForNode(DiskNode* node) const;
     void setupAnimation();
 
     DiskNode* m_dataRoot{nullptr};     // Root of the whole scan
