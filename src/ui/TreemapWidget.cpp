@@ -101,30 +101,10 @@ void TreemapWidget::setupAnimation() {
 }
 
 void TreemapWidget::renderTreemap(QPainter* painter, const QRectF& bounds) {
-    Q_UNUSED(painter);
     Q_UNUSED(bounds);
-}
-
-void TreemapWidget::paintEvent(QPaintEvent* event) {
-    Q_UNUSED(event);
-    QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setRenderHint(QPainter::TextAntialiasing, true);
-
-    // Background
-    painter.fillRect(rect(), QColor(24, 25, 29));
-
-    if (!m_currentRoot || m_tiles.empty()) {
-        painter.setPen(QColor(130, 140, 155));
-        painter.drawText(rect(), Qt::AlignCenter, 
-                         m_currentRoot ? QStringLiteral("Folder is empty or contains 0-byte files")
-                                       : QStringLiteral("No scan data available. Start a scan to view treemap."));
-        return;
-    }
-
     QFont labelFont = font();
     labelFont.setPointSize(8);
-    painter.setFont(labelFont);
+    painter->setFont(labelFont);
 
     for (const auto& tile : m_tiles) {
         DiskNode* node = tile.node;
@@ -155,37 +135,57 @@ void TreemapWidget::paintEvent(QPaintEvent* event) {
             grad.setColorAt(1.0, baseColor.darker(125));
         }
 
-        painter.setBrush(grad);
+        painter->setBrush(grad);
 
         // Border styling
         if (isSelected) {
-            painter.setPen(QPen(QColor(255, 215, 0), 2.0)); // Bright Gold for selection
+            painter->setPen(QPen(QColor(255, 215, 0), 2.0)); // Bright Gold for selection
         } else if (isHovered) {
-            painter.setPen(QPen(QColor(255, 255, 255), 1.5)); // White for hover
+            painter->setPen(QPen(QColor(255, 255, 255), 1.5)); // White for hover
         } else {
-            painter.setPen(QPen(QColor(18, 19, 23, 220), 0.8)); // Dark subtle separator
+            painter->setPen(QPen(QColor(18, 19, 23, 220), 0.8)); // Dark subtle separator
         }
 
-        painter.drawRect(r);
+        painter->drawRect(r);
 
         // Text label if space permits
         if (r.width() >= 48.0 && r.height() >= 24.0) {
             QRectF textRect = r.adjusted(3, 2, -3, -2);
-            painter.setPen(QColor(240, 243, 246));
+            painter->setPen(QColor(240, 243, 246));
 
             QString displayText = node->name();
             QFontMetrics fm(labelFont);
             QString elidedName = fm.elidedText(displayText, Qt::ElideMiddle, static_cast<int>(textRect.width()));
 
-            painter.drawText(textRect, Qt::AlignTop | Qt::AlignLeft, elidedName);
+            painter->drawText(textRect, Qt::AlignTop | Qt::AlignLeft, elidedName);
 
             if (r.height() >= 36.0) {
                 QRectF sizeRect = textRect.adjusted(0, fm.height(), 0, 0);
-                painter.setPen(QColor(200, 210, 220, 200));
-                painter.drawText(sizeRect, Qt::AlignTop | Qt::AlignLeft, DiskNode::formatSize(node->size()));
+                painter->setPen(QColor(200, 210, 220, 200));
+                painter->drawText(sizeRect, Qt::AlignTop | Qt::AlignLeft, DiskNode::formatSize(node->size()));
             }
         }
     }
+}
+
+void TreemapWidget::paintEvent(QPaintEvent* event) {
+    Q_UNUSED(event);
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::TextAntialiasing, true);
+
+    // Background
+    painter.fillRect(rect(), QColor(24, 25, 29));
+
+    if (!m_currentRoot || m_tiles.empty()) {
+        painter.setPen(QColor(130, 140, 155));
+        painter.drawText(rect(), Qt::AlignCenter, 
+                         m_currentRoot ? QStringLiteral("Folder is empty or contains 0-byte files")
+                                       : QStringLiteral("No scan data available. Start a scan to view treemap."));
+        return;
+    }
+
+    renderTreemap(&painter, rect());
 }
 
 void TreemapWidget::mouseMoveEvent(QMouseEvent* event) {
