@@ -230,10 +230,14 @@ void TreemapWidget::renderTreemap(QPainter* painter, const QRectF& bounds) {
 
         // Base color
         QColor baseColor;
-        if (node->isDirectory()) {
-            baseColor = QColor(48, 55, 68);
+        if (m_colorMode == ColorMode::FileAge) {
+            baseColor = DiskNode::getColorForAge(node->lastModifiedTime());
         } else {
-            baseColor = DiskNode::getColorForExtension(node->extension());
+            if (node->isDirectory()) {
+                baseColor = QColor(48, 55, 68);
+            } else {
+                baseColor = DiskNode::getColorForExtension(node->extension());
+            }
         }
 
         bool isHovered = (node == m_hoveredNode);
