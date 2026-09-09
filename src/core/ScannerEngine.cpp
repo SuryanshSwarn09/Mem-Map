@@ -1,5 +1,6 @@
 #include "ScannerEngine.h"
 #include <filesystem>
+#include <chrono>
 #include <QFileInfo>
 #include <QDir>
 #include <QDebug>
@@ -81,6 +82,15 @@ std::unique_ptr<DiskNode> ScannerEngine::scanDirectory(const QString& dirPath, D
         return dirNode;
     }
 
+    // Capture directory last write time
+    std::error_code dirTimeEc;
+    auto dirFtime = fs::last_write_time(p, dirTimeEc);
+    if (!dirTimeEc) {
+        auto sysTime = std::chrono::file_clock::to_sys(dirFtime);
+        int64_t dirSec = std::chrono::duration_cast<std::chrono::seconds>(sysTime.time_since_epoch()).count();
+        dirNode->setLastModifiedTime(dirSec);
+    }
+
     auto options = fs::directory_options::skip_permission_denied;
     fs::directory_iterator it(p, options, ec);
     fs::directory_iterator endIt;
@@ -121,6 +131,15 @@ std::unique_ptr<DiskNode> ScannerEngine::scanDirectory(const QString& dirPath, D
 
                     auto fileNode = std::make_unique<DiskNode>(childName, childPath, false, dirNode.get());
                     fileNode->setSize(fileSize);
+
+                    std::error_code fileTimeEc;
+                    auto fileFtime = entry.last_write_time(fileTimeEc);
+                    if (!fileTimeEc) {
+                        auto sysTime = std::chrono::file_clock::to_sys(fileFtime);
+                        int64_t fileSec = std::chrono::duration_cast<std::chrono::seconds>(sysTime.time_since_epoch()).count();
+                        fileNode->setLastModifiedTime(fileSec);
+                    }
+
                     dirNode->addChild(std::move(fileNode));
 
                     m_totalFiles++;
