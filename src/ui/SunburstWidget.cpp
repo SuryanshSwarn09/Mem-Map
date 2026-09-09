@@ -13,6 +13,7 @@
 #include <QDir>
 #include <cmath>
 #include <algorithm>
+#include <QDateTime>
 
 SunburstWidget::SunburstWidget(QWidget* parent)
     : QWidget(parent)
@@ -20,6 +21,13 @@ SunburstWidget::SunburstWidget(QWidget* parent)
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
     setAttribute(Qt::WA_OpaquePaintEvent, true);
+}
+
+void SunburstWidget::setColorMode(ColorMode mode) {
+    if (m_colorMode != mode) {
+        m_colorMode = mode;
+        update();
+    }
 }
 
 void SunburstWidget::setRootNode(DiskNode* rootNode) {
@@ -173,10 +181,14 @@ void SunburstWidget::paintEvent(QPaintEvent* event) {
         bool isSelected = (node == m_selectedNode);
 
         QColor baseColor;
-        if (node->isDirectory()) {
-            baseColor = QColor(60, 70, 85);
+        if (m_colorMode == ColorMode::FileAge) {
+            baseColor = DiskNode::getColorForAge(node->lastModifiedTime());
         } else {
-            baseColor = DiskNode::getColorForExtension(node->extension());
+            if (node->isDirectory()) {
+                baseColor = QColor(60, 70, 85);
+            } else {
+                baseColor = DiskNode::getColorForExtension(node->extension());
+            }
         }
 
         // Slightly brighten or darken based on depth
@@ -303,12 +315,17 @@ void SunburstWidget::mouseMoveEvent(QMouseEvent* event) {
                 "<tr><td><b>Name:</b></td><td style='padding-left:8px;'>%1</td></tr>"
                 "<tr><td><b>Size:</b></td><td style='padding-left:8px;'>%2 (%3%)</td></tr>"
                 "<tr><td><b>Type:</b></td><td style='padding-left:8px;'>%4</td></tr>"
-                "<tr><td><b>Path:</b></td><td style='padding-left:8px;'>%5</td></tr>"
+                "<tr><td><b>Modified:</b></td><td style='padding-left:8px;'>%5 (%6)</td></tr>"
+                "<tr><td><b>Path:</b></td><td style='padding-left:8px;'>%7</td></tr>"
                 "</table>"
             ).arg(m_hoveredNode->name().toHtmlEscaped(),
                  DiskNode::formatSize(m_hoveredNode->size()),
                  QString::number(percent, 'f', 1),
                  m_hoveredNode->isDirectory() ? QStringLiteral("Folder") : m_hoveredNode->extension().toUpper(),
+                 m_hoveredNode->lastModifiedTime() > 0 
+                     ? QDateTime::fromSecsSinceEpoch(m_hoveredNode->lastModifiedTime()).toString(QStringLiteral("yyyy-MM-dd hh:mm"))
+                     : QStringLiteral("Unknown"),
+                 DiskNode::formatAge(m_hoveredNode->lastModifiedTime()),
                  m_hoveredNode->fullPath().toHtmlEscaped());
 
             QToolTip::showText(event->globalPosition().toPoint(), tip, this);

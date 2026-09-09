@@ -20,10 +20,17 @@ class SunburstWidget : public QWidget {
     Q_OBJECT
 
 public:
+    enum class ColorMode {
+        FileType,
+        FileAge
+    };
+
     explicit SunburstWidget(QWidget* parent = nullptr);
     ~SunburstWidget() override = default;
 
     void setRootNode(DiskNode* rootNode);
+    void setColorMode(ColorMode mode);
+    ColorMode colorMode() const { return m_colorMode; }
     void zoomIn(DiskNode* node);
     void zoomOut();
     void selectNode(DiskNode* node);
@@ -62,4 +69,5 @@ private:
     QPointF m_center;
     double m_hubRadius{60.0};
     int m_maxDepth{4};
+    ColorMode m_colorMode{ColorMode::FileType};
 };
