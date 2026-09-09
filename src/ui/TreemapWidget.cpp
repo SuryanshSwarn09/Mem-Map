@@ -13,6 +13,7 @@
 #include <QDir>
 #include <QVariantAnimation>
 #include <QEasingCurve>
+#include <QDateTime>
 
 TreemapWidget::TreemapWidget(QWidget* parent)
     : QWidget(parent)
@@ -394,12 +395,17 @@ void TreemapWidget::mouseMoveEvent(QMouseEvent* event) {
                 "<tr><td><b>Name:</b></td><td style='padding-left:8px;'>%1</td></tr>"
                 "<tr><td><b>Size:</b></td><td style='padding-left:8px;'>%2 (%3%)</td></tr>"
                 "<tr><td><b>Type:</b></td><td style='padding-left:8px;'>%4</td></tr>"
-                "<tr><td><b>Path:</b></td><td style='padding-left:8px;'>%5</td></tr>"
+                "<tr><td><b>Modified:</b></td><td style='padding-left:8px;'>%5 (%6)</td></tr>"
+                "<tr><td><b>Path:</b></td><td style='padding-left:8px;'>%7</td></tr>"
                 "</table>"
             ).arg(m_hoveredNode->name().toHtmlEscaped(),
                  DiskNode::formatSize(m_hoveredNode->size()),
                  QString::number(percent, 'f', 1),
                  m_hoveredNode->isDirectory() ? QStringLiteral("Folder") : m_hoveredNode->extension().toUpper(),
+                 m_hoveredNode->lastModifiedTime() > 0 
+                     ? QDateTime::fromSecsSinceEpoch(m_hoveredNode->lastModifiedTime()).toString(QStringLiteral("yyyy-MM-dd hh:mm"))
+                     : QStringLiteral("Unknown"),
+                 DiskNode::formatAge(m_hoveredNode->lastModifiedTime()),
                  m_hoveredNode->fullPath().toHtmlEscaped());
 
             QToolTip::showText(event->globalPosition().toPoint(), tip, this);
