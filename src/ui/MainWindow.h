@@ -94,6 +94,7 @@ private:
     QPushButton* m_btnTreemapView{nullptr};
     QPushButton* m_btnSunburstView{nullptr};
     QPushButton* m_btnColorMode{nullptr};
+    QWidget* m_heatmapLegend{nullptr};
 
     // Status Bar
     QLabel* m_statusLabel{nullptr};

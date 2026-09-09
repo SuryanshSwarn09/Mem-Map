@@ -298,6 +298,36 @@ void MainWindow::setupUi() {
     visHeader->addStretch();
     visLayout->addLayout(visHeader);
 
+    // Heatmap Color Legend Banner (visible when File Age mode is active)
+    m_heatmapLegend = new QWidget(this);
+    m_heatmapLegend->setStyleSheet(QStringLiteral(
+        "background-color: #161B22; border: 1px solid #30363D; border-radius: 4px; padding: 2px;"
+    ));
+    QHBoxLayout* legendLayout = new QHBoxLayout(m_heatmapLegend);
+    legendLayout->setContentsMargins(8, 3, 8, 3);
+    legendLayout->setSpacing(10);
+
+    QLabel* lblAgeTitle = new QLabel(QStringLiteral("<b>Age Scale:</b>"), m_heatmapLegend);
+    lblAgeTitle->setStyleSheet(QStringLiteral("color: #8B949E; font-size: 11px; border: none;"));
+    legendLayout->addWidget(lblAgeTitle);
+
+    auto makeSwatch = [this](const QString& colorHex, const QString& text) {
+        QLabel* lbl = new QLabel(QStringLiteral("<span style='color:%1;'>■</span> <span style='color:#C9D1D9;'>%2</span>").arg(colorHex, text), m_heatmapLegend);
+        lbl->setStyleSheet(QStringLiteral("font-size: 11px; border: none;"));
+        return lbl;
+    };
+
+    legendLayout->addWidget(makeSwatch(QStringLiteral("#F85149"), QStringLiteral("&lt; 7d (Hot)")));
+    legendLayout->addWidget(makeSwatch(QStringLiteral("#D29922"), QStringLiteral("&lt; 1mo")));
+    legendLayout->addWidget(makeSwatch(QStringLiteral("#3FB950"), QStringLiteral("&lt; 6mo")));
+    legendLayout->addWidget(makeSwatch(QStringLiteral("#388BFD"), QStringLiteral("&lt; 1yr")));
+    legendLayout->addWidget(makeSwatch(QStringLiteral("#6E7681"), QStringLiteral("1-2yr")));
+    legendLayout->addWidget(makeSwatch(QStringLiteral("#30363D"), QStringLiteral("&gt; 2yr (Cold)")));
+    legendLayout->addStretch();
+
+    m_heatmapLegend->setVisible(false);
+    visLayout->addWidget(m_heatmapLegend);
+
     // Stacked Visualizers
     m_visStack = new QStackedWidget(this);
     m_treemapWidget = new TreemapWidget(this);
@@ -542,10 +572,12 @@ void MainWindow::toggleColorMode() {
         m_btnColorMode->setText(QStringLiteral("🌡 File Age (Heatmap)"));
         m_treemapWidget->setColorMode(TreemapWidget::ColorMode::FileAge);
         m_sunburstWidget->setColorMode(SunburstWidget::ColorMode::FileAge);
+        m_heatmapLegend->setVisible(true);
     } else {
         m_btnColorMode->setText(QStringLiteral("🎨 File Type"));
         m_treemapWidget->setColorMode(TreemapWidget::ColorMode::FileType);
         m_sunburstWidget->setColorMode(SunburstWidget::ColorMode::FileType);
+        m_heatmapLegend->setVisible(false);
     }
 }
 
