@@ -46,6 +46,9 @@ void DiskNode::calculateBottomUpSizes() {
         } else {
             m_fileCount += 1;
         }
+        if (child->lastModifiedTime() > m_lastModifiedTime) {
+            m_lastModifiedTime = child->lastModifiedTime();
+        }
     }
 }
 
