@@ -28,9 +28,11 @@ public:
     const std::vector<std::unique_ptr<DiskNode>>& children() const { return m_children; }
     std::vector<std::unique_ptr<DiskNode>>& mutableChildren() { return m_children; }
 
+    int64_t lastModifiedTime() const { return m_lastModifiedTime; }
     void setSize(uint64_t bytes) { m_size = bytes; }
     void setFileCount(uint64_t count) { m_fileCount = count; }
     void setDirCount(uint64_t count) { m_dirCount = count; }
+    void setLastModifiedTime(int64_t t) { m_lastModifiedTime = t; }
     void setParent(DiskNode* parent) { m_parent = parent; }
 
     DiskNode* addChild(std::unique_ptr<DiskNode> child);
@@ -53,6 +55,7 @@ private:
     uint64_t m_size{0};
     uint64_t m_fileCount{0};
     uint64_t m_dirCount{0};
+    int64_t m_lastModifiedTime{0};
     QString m_extension;
     DiskNode* m_parent{nullptr};
     std::vector<std::unique_ptr<DiskNode>> m_children;
