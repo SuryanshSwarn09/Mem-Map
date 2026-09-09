@@ -47,6 +47,8 @@ public:
     static QString getFileCategory(const QString& ext);
     static QColor getColorForCategory(const QString& category);
     static QColor getColorForExtension(const QString& ext);
+    static QColor getColorForAge(int64_t lastModifiedSec, int64_t nowSec = 0);
+    static QString formatAge(int64_t lastModifiedSec, int64_t nowSec = 0);
 
 private:
     QString m_name;

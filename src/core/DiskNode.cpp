@@ -1,5 +1,6 @@
 #include "DiskNode.h"
 #include <QFileInfo>
+#include <QDateTime>
 #include <algorithm>
 
 DiskNode::DiskNode(const QString& name, const QString& fullPath, bool isDir, DiskNode* parent)
@@ -159,4 +160,78 @@ QColor DiskNode::getColorForCategory(const QString& category) {
 
 QColor DiskNode::getColorForExtension(const QString& ext) {
     return getColorForCategory(getFileCategory(ext));
+}
+
+QColor DiskNode::getColorForAge(int64_t lastModifiedSec, int64_t nowSec) {
+    if (lastModifiedSec <= 0) {
+        return QColor(68, 76, 86); // Dark Slate (unknown / invalid)
+    }
+
+    if (nowSec <= 0) {
+        nowSec = QDateTime::currentSecsSinceEpoch();
+    }
+
+    int64_t ageSec = nowSec - lastModifiedSec;
+    if (ageSec < 0) ageSec = 0;
+
+    const int64_t daySec = 86400;
+
+    // Thermal Age Scale:
+    // < 7 days: Hot Coral Red (#F85149)
+    if (ageSec <= 7 * daySec) {
+        return QColor(248, 81, 73);
+    }
+    // 7 - 30 days: Warm Amber Gold (#D29922)
+    if (ageSec <= 30 * daySec) {
+        return QColor(210, 153, 34);
+    }
+    // 1 - 6 months (180 days): Fresh Green (#3FB950)
+    if (ageSec <= 180 * daySec) {
+        return QColor(63, 185, 80);
+    }
+    // 6 months - 1 year (365 days): Cool Electric Blue (#388BFD)
+    if (ageSec <= 365 * daySec) {
+        return QColor(56, 139, 253);
+    }
+    // 1 - 2 years (730 days): Muted Steel (#6E7681)
+    if (ageSec <= 730 * daySec) {
+        return QColor(110, 118, 129);
+    }
+    // > 2 years: Cold Deep Slate (#444C56)
+    return QColor(68, 76, 86);
+}
+
+QString DiskNode::formatAge(int64_t lastModifiedSec, int64_t nowSec) {
+    if (lastModifiedSec <= 0) {
+        return QStringLiteral("Unknown");
+    }
+
+    if (nowSec <= 0) {
+        nowSec = QDateTime::currentSecsSinceEpoch();
+    }
+
+    QDateTime dt = QDateTime::fromSecsSinceEpoch(lastModifiedSec);
+    QString dateStr = dt.toString(QStringLiteral("yyyy-MM-dd"));
+
+    int64_t ageSec = nowSec - lastModifiedSec;
+    if (ageSec < 0) ageSec = 0;
+
+    const int64_t daySec = 86400;
+    QString relStr;
+
+    if (ageSec < daySec) {
+        relStr = QStringLiteral("Today");
+    } else if (ageSec < 2 * daySec) {
+        relStr = QStringLiteral("Yesterday");
+    } else if (ageSec < 30 * daySec) {
+        relStr = QStringLiteral("%1 days ago").arg(ageSec / daySec);
+    } else if (ageSec < 365 * daySec) {
+        int months = static_cast<int>(ageSec / (30 * daySec));
+        relStr = QStringLiteral("%1 %2 ago").arg(months).arg(months == 1 ? "month" : "months");
+    } else {
+        double years = static_cast<double>(ageSec) / (365.0 * daySec);
+        relStr = QString::asprintf("%.1f years ago", years);
+    }
+
+    return QStringLiteral("%1 (%2)").arg(dateStr, relStr);
 }
