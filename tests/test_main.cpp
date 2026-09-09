@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <QCoreApplication>
+#include <QDateTime>
 #include "core/DiskNode.h"
 #include "core/ScannerEngine.h"
 #include "ui/TreemapLayout.h"
@@ -242,6 +243,84 @@ void testTreemapAnimationGeometry() {
     std::cout << "  -> PASSED! Interpolation math validated at all stages (t=0.0, 0.5, 1.0)." << std::endl;
 }
 
+void testFileAgeHeatmap() {
+    std::cout << "[TEST] Running testFileAgeHeatmap..." << std::endl;
+
+    int64_t nowSec = QDateTime::currentDateTimeUtc().toSecsSinceEpoch();
+
+    // 1. Test thermal color scale
+    // < 7 days -> Coral Red (#F85149)
+    QColor c1 = DiskNode::getColorForAge(nowSec - 2 * 86400);
+    assert(c1 == QColor(QStringLiteral("#F85149")));
+    (void)c1;
+
+    // 7 - 30 days -> Warm Amber (#D29922)
+    QColor c2 = DiskNode::getColorForAge(nowSec - 15 * 86400);
+    assert(c2 == QColor(QStringLiteral("#D29922")));
+    (void)c2;
+
+    // 30 - 180 days -> Fresh Green (#3FB950)
+    QColor c3 = DiskNode::getColorForAge(nowSec - 60 * 86400);
+    assert(c3 == QColor(QStringLiteral("#3FB950")));
+    (void)c3;
+
+    // 180 - 365 days -> Cool Blue (#388BFD)
+    QColor c4 = DiskNode::getColorForAge(nowSec - 250 * 86400);
+    assert(c4 == QColor(QStringLiteral("#388BFD")));
+    (void)c4;
+
+    // 365 - 730 days -> Steel (#6E7681)
+    QColor c5 = DiskNode::getColorForAge(nowSec - 500 * 86400);
+    assert(c5 == QColor(QStringLiteral("#6E7681")));
+    (void)c5;
+
+    // > 730 days -> Cold Slate (#30363D)
+    QColor c6 = DiskNode::getColorForAge(nowSec - 1000 * 86400);
+    assert(c6 == QColor(QStringLiteral("#30363D")));
+    (void)c6;
+
+    // Invalid / 0 timestamp -> Default Cold Slate (#30363D)
+    QColor c0 = DiskNode::getColorForAge(0);
+    assert(c0 == QColor(QStringLiteral("#30363D")));
+    (void)c0;
+
+    // 2. Test relative age string formatting
+    QString f1 = DiskNode::formatAge(nowSec - 3600);
+    assert(f1 == QStringLiteral("Today"));
+    (void)f1;
+
+    QString f2 = DiskNode::formatAge(nowSec - 4 * 86400);
+    assert(f2 == QStringLiteral("4d ago"));
+    (void)f2;
+
+    QString f3 = DiskNode::formatAge(nowSec - 45 * 86400);
+    assert(f3 == QStringLiteral("1mo ago"));
+    (void)f3;
+
+    QString f4 = DiskNode::formatAge(nowSec - 800 * 86400);
+    assert(f4 == QStringLiteral("2y ago"));
+    (void)f4;
+
+    QString f0 = DiskNode::formatAge(0);
+    assert(f0 == QStringLiteral("Unknown"));
+    (void)f0;
+
+    // 3. Test timestamp rollup in parent directories
+    auto parent = std::make_unique<DiskNode>("parent", "C:/parent", true);
+    auto childOld = std::make_unique<DiskNode>("old.txt", "C:/parent/old.txt", false);
+    childOld->setLastModifiedTime(nowSec - 300 * 86400);
+    auto childNew = std::make_unique<DiskNode>("new.txt", "C:/parent/new.txt", false);
+    childNew->setLastModifiedTime(nowSec - 2 * 86400);
+
+    parent->addChild(std::move(childOld));
+    parent->addChild(std::move(childNew));
+    parent->calculateBottomUpSizes();
+
+    assert(parent->lastModifiedTime() == nowSec - 2 * 86400);
+
+    std::cout << "  -> PASSED! Thermal color mapping, relative age formatting, and timestamp rollup verified." << std::endl;
+}
+
 int main(int argc, char* argv[]) {
     QCoreApplication app(argc, argv);
 
@@ -255,6 +334,7 @@ int main(int argc, char* argv[]) {
     testReportExporter();
     testSnapshotEngine();
     testTreemapAnimationGeometry();
+    testFileAgeHeatmap();
 
     std::cout << "========================================" << std::endl;
     std::cout << "  ALL AUTOMATED UNIT TESTS PASSED!      " << std::endl;
