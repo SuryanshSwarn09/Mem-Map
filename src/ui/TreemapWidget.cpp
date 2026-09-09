@@ -40,6 +40,13 @@ void TreemapWidget::setRootNode(DiskNode* rootNode) {
     emit currentRootChanged(m_currentRoot);
 }
 
+void TreemapWidget::setColorMode(ColorMode mode) {
+    if (m_colorMode != mode) {
+        m_colorMode = mode;
+        update();
+    }
+}
+
 void TreemapWidget::zoomIn(DiskNode* node) {
     if (!node || !node->isDirectory() || node == m_currentRoot) return;
 

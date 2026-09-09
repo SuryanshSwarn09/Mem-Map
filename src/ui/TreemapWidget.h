@@ -12,10 +12,17 @@ class TreemapWidget : public QWidget {
     Q_OBJECT
 
 public:
+    enum class ColorMode {
+        FileType,
+        FileAge
+    };
+
     explicit TreemapWidget(QWidget* parent = nullptr);
     ~TreemapWidget() override = default;
 
     void setRootNode(DiskNode* rootNode);
+    void setColorMode(ColorMode mode);
+    ColorMode colorMode() const { return m_colorMode; }
     void zoomIn(DiskNode* node);
     void zoomOut();
     void selectNode(DiskNode* node);
@@ -51,6 +58,7 @@ private:
 
     std::vector<TreemapTile> m_tiles;
     int m_maxDepth{2};
+    ColorMode m_colorMode{ColorMode::FileType};
 
     // Animation state
     QVariantAnimation* m_zoomAnim{nullptr};
