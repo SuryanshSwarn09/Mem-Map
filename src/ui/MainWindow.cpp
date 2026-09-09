@@ -282,6 +282,19 @@ void MainWindow::setupUi() {
 
     visHeader->addWidget(m_btnTreemapView);
     visHeader->addWidget(m_btnSunburstView);
+    visHeader->addSpacing(12);
+
+    QLabel* lblColor = new QLabel(QStringLiteral("Color:"), this);
+    lblColor->setStyleSheet(QStringLiteral("color: #8B949E; font-weight: bold; font-size: 12px;"));
+    visHeader->addWidget(lblColor);
+
+    m_btnColorMode = new QPushButton(QStringLiteral("🎨 File Type"), this);
+    m_btnColorMode->setCheckable(true);
+    m_btnColorMode->setObjectName(QStringLiteral("visToggle"));
+    m_btnColorMode->setToolTip(QStringLiteral("Toggle visualizer coloring between File Type and File Age Heatmap (Hot = Recent, Cold = Stale)"));
+    connect(m_btnColorMode, &QPushButton::clicked, this, &MainWindow::toggleColorMode);
+    visHeader->addWidget(m_btnColorMode);
+
     visHeader->addStretch();
     visLayout->addLayout(visHeader);
 
@@ -520,6 +533,19 @@ void MainWindow::setVisualizerView(int index) {
         if (m_treemapWidget->selectedNode()) {
             m_sunburstWidget->selectNode(m_treemapWidget->selectedNode());
         }
+    }
+}
+
+void MainWindow::toggleColorMode() {
+    bool isAge = m_btnColorMode->isChecked();
+    if (isAge) {
+        m_btnColorMode->setText(QStringLiteral("🌡 File Age (Heatmap)"));
+        m_treemapWidget->setColorMode(TreemapWidget::ColorMode::FileAge);
+        m_sunburstWidget->setColorMode(SunburstWidget::ColorMode::FileAge);
+    } else {
+        m_btnColorMode->setText(QStringLiteral("🎨 File Type"));
+        m_treemapWidget->setColorMode(TreemapWidget::ColorMode::FileType);
+        m_sunburstWidget->setColorMode(SunburstWidget::ColorMode::FileType);
     }
 }
 

@@ -61,6 +61,7 @@ private slots:
     void onSaveSnapshotClicked();
     void onCompareWithSnapshotClicked();
     void onCompareTwoSnapshotsClicked();
+    void toggleColorMode();
 
 private:
     void setupUi();
@@ -92,6 +93,7 @@ private:
     SunburstWidget* m_sunburstWidget{nullptr};
     QPushButton* m_btnTreemapView{nullptr};
     QPushButton* m_btnSunburstView{nullptr};
+    QPushButton* m_btnColorMode{nullptr};
 
     // Status Bar
     QLabel* m_statusLabel{nullptr};
