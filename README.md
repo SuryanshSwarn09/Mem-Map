@@ -14,12 +14,12 @@ A high-performance desktop Disk Space & Storage Analyzer for Windows (inspired b
 +---------------------------------------------------------------------------------------------------------+
 | QSplitter                                                                                               |
 |  +-------------------------------------------------+  +----------------------------------------------+  |
-|  | Tabs: [Directory Tree] [Types] [Top 100] [Diff] |  | Visualizer: [ ▦ Treemap ] [ 🔘 Sunburst ]    |  |
-|  | Name         | Usage% | Size    | Files         |  |                                              |  |
+|  | Tabs: [Directory Tree] [Types] [Top 100] [Diff] |  | Visualizer: [▦ Treemap][🔘 Sunburst]         |  |
+|  | Name         | Usage% | Size    | Files         |  | Color:      [🎨 File Type / 🌡 File Age]     |  |
 |  | > Videos     | [====] | 42.1 GB | 120           |  | - Squarified Treemap Layout (Bruls et al.)   |  |
 |  | > Music      | [==  ] | 12.4 GB | 850           |  | - DaisyDisk-Style Multi-Ring Sunburst        |  |
-|  | > Documents  | [=   ] |  1.2 GB | 320           |  | - 3D Cushion / Gradient Shading              |  |
-|  | > Code       | [    ] |  0.4 GB | 540           |  | - Color-Coded by File Category               |  |
+|  | > Documents  | [=   ] |  1.2 GB | 320           |  | - Thermal File Age Heatmap (Hot vs Stale)    |  |
+|  | > Code       | [    ] |  0.4 GB | 540           |  | - 3D Cushion / Gradient Shading              |  |
 |  |                                                 |  | - Hover Tooltips & Double-Click Drill-Down   |  |
 |  +-------------------------------------------------+  +----------------------------------------------+  |
 +---------------------------------------------------------------------------------------------------------+
@@ -50,16 +50,26 @@ A high-performance desktop Disk Space & Storage Analyzer for Windows (inspired b
 - **DaisyDisk-Style Sunburst View** ([`SunburstWidget`](src/ui/SunburstWidget.h)):
   - Multi-layered concentric annular rings partitioning $[0, 360^\circ]$ based on relative directory size up to 4 levels deep.
   - Interactive center core displaying active folder name, total size, and acting as a click-to-zoom-out button.
-- **Color-Coded File Categories**:
-  - 🟣 **Video**: MP4, MKV, AVI, MOV (`#9C27B0`)
-  - 🔵 **Document**: PDF, DOCX, XLSX, TXT (`#2196F3`)
-  - 🟠 **Image**: JPG, PNG, WEBP, SVG (`#FF9800`)
-  - 🟡 **Archive**: ZIP, RAR, 7Z, ISO (`#FFC107`)
-  - 🟢 **Executable**: EXE, DLL, SYS (`#4CAF50`)
-  - 🔴 **Code / Dev**: CPP, PY, JS, HTML (`#E91E63`)
-  - 🔷 **Audio**: MP3, WAV, FLAC (`#00BCD4`)
+- **Visualizer Color Modes**:
+  - **File Category Mode** (`[ 🎨 File Type ]`):
+    - 🟣 **Video**: MP4, MKV, AVI, MOV (`#9C27B0`)
+    - 🔵 **Document**: PDF, DOCX, XLSX, TXT (`#2196F3`)
+    - 🟠 **Image**: JPG, PNG, WEBP, SVG (`#FF9800`)
+    - 🟡 **Archive**: ZIP, RAR, 7Z, ISO (`#FFC107`)
+    - 🟢 **Executable**: EXE, DLL, SYS (`#4CAF50`)
+    - 🔴 **Code / Dev**: CPP, PY, JS, HTML (`#E91E63`)
+    - 🔷 **Audio**: MP3, WAV, FLAC (`#00BCD4`)
+  - **Thermal File Age Heatmap Mode** (`[ 🌡 File Age ]`):
+    - 🟥 **< 7 days**: `#F85149` (Hot Coral Red - recently modified active work)
+    - 🟨 **7 - 30 days**: `#D29922` (Warm Amber Gold - modified this month)
+    - 🟩 **1 - 6 months**: `#3FB950` (Fresh Green - modified within half a year)
+    - 🟦 **6 - 12 months**: `#388BFD` (Cool Electric Blue - aging data)
+    - ⬜ **1 - 2 years**: `#6E7681` (Muted Steel - dormant data)
+    - ⬛ **> 2 years**: `#30363D` (Cold Deep Slate - abandoned files, prime cleanup targets)
+    - **Bottom-Up Age Rollup**: Folders recursively reflect the newest modification date of their contents.
+    - **Dynamic Legend Bar**: Shows a compact thermal swatch bar directly below the visualizer header.
 - **Interactivity**:
-  - **Hover**: Rich HTML tooltip showing name, formatted size, relative percentage, and full path.
+  - **Hover**: Rich HTML tooltip showing name, formatted size, relative percentage, file type, exact Last Modified timestamp (`yyyy-MM-dd hh:mm`), relative age (`Today`, `4d ago`, `2mo ago`), and full path.
   - **Click**: Bidirectional synchronization with the Directory TreeView.
   - **Double-Click**: Drill down into any folder.
   - **Right-Click Menu**: Open in Windows File Explorer or copy full path.
@@ -178,6 +188,14 @@ The following breakdown details the engineering progression from the initial con
 - **Event Safety & Interrupt Resilience**: Added input guards to ignore mouse events during transitions, with graceful interruption handling on window resize or re-rooting.
 - **Unit Test Coverage**: Added `testTreemapAnimationGeometry` in [`tests/test_main.cpp`](tests/test_main.cpp) validating interpolation math across all keyframes.
 
+### Phase 7: Thermal File Age Heatmap Mode & Age Shading
+- **Filesystem Modification Time Extraction**: Captured high-precision `fs::last_write_time` in [`ScannerEngine`](src/core/ScannerEngine.h) converted to Unix epoch seconds via C++20 `std::chrono::file_clock::to_sys`.
+- **Bottom-Up Last Modified Rollup**: Extended [`DiskNode::calculateBottomUpSizes`](src/core/DiskNode.cpp) to recursively roll up timestamps so directories reflect the most recently touched file inside them.
+- **Thermal Visualizer Shading**: Added `ColorMode` (`FileType` vs `FileAge`) to both [`TreemapWidget`](src/ui/TreemapWidget.h) and [`SunburstWidget`](src/ui/SunburstWidget.h), shading visualizer tiles on a 6-tier thermal spectrum (Hot Red `< 7d` to Cold Slate `> 2yr`).
+- **Interactive UI Toggle & Legend**: Added a dedicated `[ 🎨 File Type ]` / `[ 🌡 File Age ]` toolbar toggle and an auto-toggling compact color swatch legend bar to [`MainWindow`](src/ui/MainWindow.h).
+- **Tooltip Timestamps & Age Calculations**: Enriched hover tooltips with exact modification time and human-friendly relative age indicators (`Today`, `4d ago`, `1mo ago`, `2y ago`).
+- **Unit Test Coverage**: Added `testFileAgeHeatmap` in [`tests/test_main.cpp`](tests/test_main.cpp) validating timestamp conversions, relative age strings, directory rollup, and color boundary logic.
+
 ---
 
 ## 📁 Project Structure
@@ -212,7 +230,7 @@ E:\Mem-scan\
 │       ├── TopFilesWidget.h/.cpp # Top 100 largest files table
 │       └── SnapshotDiffWidget.h/.cpp # Visual snapshot comparison dashboard
 └── tests\
-    └── test_main.cpp           # Automated unit test suite (5 test suites)
+    └── test_main.cpp           # Automated unit test suite (7 test suites)
 ```
 
 ---
