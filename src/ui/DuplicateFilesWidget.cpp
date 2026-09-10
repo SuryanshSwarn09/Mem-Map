@@ -426,13 +426,60 @@ void DuplicateFilesWidget::filterFiles(const QString& query) {
     }
 }
 
+void DuplicateFilesWidget::onItemChanged(QTreeWidgetItem* item, int column) {
+    if (m_isUpdatingCheckState || column != 0 || !item) return;
+
+    // Check if this is a child file item
+    if (item->parent() != nullptr) {
+        int groupIdx = item->data(1, Qt::UserRole).toInt();
+        int fileIdx = item->data(2, Qt::UserRole).toInt();
+
+        if (groupIdx >= 0 && groupIdx < static_cast<int>(m_result.groups.size())) {
+            auto& group = m_result.groups[groupIdx];
+            if (fileIdx >= 0 && fileIdx < static_cast<int>(group.files.size())) {
+                group.files[fileIdx].isSelectedForDeletion = (item->checkState(0) == Qt::Checked);
+            }
+        }
+        updateSelectedStats();
+    }
+}
+
+void DuplicateFilesWidget::updateSelectedStats() {
+    int64_t selectedCount = 0;
+    int64_t selectedBytes = 0;
+
+    for (const auto& group : m_result.groups) {
+        for (const auto& file : group.files) {
+            if (file.isSelectedForDeletion) {
+                selectedCount++;
+                selectedBytes += file.size;
+            }
+        }
+    }
+
+    if (m_selectedCountLabel) {
+        m_selectedCountLabel->setText(QStringLiteral("%1 files (%2)")
+            .arg(selectedCount)
+            .arg(DiskNode::formatSize(static_cast<uint64_t>(selectedBytes))));
+    }
+
+    if (m_deleteBtn) {
+        m_deleteBtn->setEnabled(selectedCount > 0);
+        if (selectedCount > 0) {
+            m_deleteBtn->setText(QStringLiteral("Move %1 Selected to Recycle Bin (%2)")
+                .arg(selectedCount)
+                .arg(DiskNode::formatSize(static_cast<uint64_t>(selectedBytes))));
+        } else {
+            m_deleteBtn->setText(QStringLiteral("Move Selected to Recycle Bin"));
+        }
+    }
+}
+
 // Scaffolds to be populated in upcoming micro-commits:
-void DuplicateFilesWidget::updateSelectedStats() {}
 void DuplicateFilesWidget::selectKeepNewest() {}
 void DuplicateFilesWidget::selectKeepOldest() {}
 void DuplicateFilesWidget::selectAllDuplicates() {}
 void DuplicateFilesWidget::deselectAll() {}
 void DuplicateFilesWidget::deleteSelectedToTrash() {}
-void DuplicateFilesWidget::onItemChanged(QTreeWidgetItem* item, int column) { Q_UNUSED(item); Q_UNUSED(column); }
 void DuplicateFilesWidget::showContextMenu(const QPoint& pos) { Q_UNUSED(pos); }
 
