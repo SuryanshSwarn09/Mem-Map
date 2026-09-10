@@ -6,6 +6,7 @@
 #include <QDateTime>
 #include "core/DiskNode.h"
 #include "core/ScannerEngine.h"
+#include "core/DuplicateFinder.h"
 #include "ui/TreemapLayout.h"
 
 namespace fs = std::filesystem;
@@ -70,6 +71,7 @@ void testTreemapLayout() {
     assert(tiles.size() == 5);
 
     for (const auto& tile : tiles) {
+        (void)tile;
         assert(tile.rect.isValid());
         assert(tile.rect.width() > 0);
         assert(tile.rect.height() > 0);
@@ -321,6 +323,125 @@ void testFileAgeHeatmap() {
     std::cout << "  -> PASSED! Thermal color mapping, relative age formatting, and timestamp rollup verified." << std::endl;
 }
 
+void testDuplicateFinderAlgorithm() {
+    std::cout << "[TEST] Running testDuplicateFinderAlgorithm..." << std::endl;
+
+    // 1. Verify DuplicateGroup wastedBytes calculation
+    {
+        DuplicateGroup gEmpty;
+        gEmpty.fileSize = 1024;
+        assert(gEmpty.wastedBytes() == 0);
+
+        DuplicateGroup gSingle;
+        gSingle.fileSize = 1024;
+        gSingle.files.push_back({"path1", 1024, 0, false});
+        assert(gSingle.wastedBytes() == 0);
+
+        DuplicateGroup gTriple;
+        gTriple.fileSize = 2048;
+        gTriple.files.push_back({"p1", 2048, 0, false});
+        gTriple.files.push_back({"p2", 2048, 0, false});
+        gTriple.files.push_back({"p3", 2048, 0, false});
+        assert(gTriple.wastedBytes() == 4096);
+    }
+
+    // 2. Set up temporary test directory with known file duplicates and edge cases
+    fs::path tempDir = fs::current_path() / "test_dup_sandbox";
+    if (fs::exists(tempDir)) {
+        fs::remove_all(tempDir);
+    }
+    fs::create_directories(tempDir);
+
+    const std::string contentA = "Duplicate payload: Antigravity Mem-Map high-performance file hashing test 2026!";
+    const std::string contentB = "Unique payload...: Antigravity Mem-Map high-performance file hashing test 2026!"; // Same length as A!
+    const std::string contentC = "Short file";
+
+    assert(contentA.size() == contentB.size());
+
+    fs::path fDup1 = tempDir / "file_a1.dat";
+    fs::path fDup2 = tempDir / "file_a2.dat";
+    fs::path fDup3 = tempDir / "file_a3.dat";
+    fs::path fCollisionSameSize = tempDir / "same_size_diff_content.dat";
+    fs::path fDiffSize = tempDir / "diff_size.dat";
+    fs::path fZero = tempDir / "zero_bytes.dat";
+
+    {
+        std::ofstream(fDup1, std::ios::binary) << contentA;
+        std::ofstream(fDup2, std::ios::binary) << contentA;
+        std::ofstream(fDup3, std::ios::binary) << contentA;
+        std::ofstream(fCollisionSameSize, std::ios::binary) << contentB;
+        std::ofstream(fDiffSize, std::ios::binary) << contentC;
+        std::ofstream(fZero, std::ios::binary);
+    }
+
+    // 3. Build DiskNode tree representing the sandbox
+    auto root = std::make_unique<DiskNode>("sandbox", QString::fromStdString(tempDir.string()), true);
+
+    auto nDup1 = std::make_unique<DiskNode>("file_a1.dat", QString::fromStdString(fDup1.string()), false);
+    nDup1->setSize(contentA.size());
+    nDup1->setLastModifiedTime(100);
+
+    auto nDup2 = std::make_unique<DiskNode>("file_a2.dat", QString::fromStdString(fDup2.string()), false);
+    nDup2->setSize(contentA.size());
+    nDup2->setLastModifiedTime(200);
+
+    auto nDup3 = std::make_unique<DiskNode>("file_a3.dat", QString::fromStdString(fDup3.string()), false);
+    nDup3->setSize(contentA.size());
+    nDup3->setLastModifiedTime(300);
+
+    auto nCollision = std::make_unique<DiskNode>("same_size_diff_content.dat", QString::fromStdString(fCollisionSameSize.string()), false);
+    nCollision->setSize(contentB.size());
+    nCollision->setLastModifiedTime(150);
+
+    auto nDiff = std::make_unique<DiskNode>("diff_size.dat", QString::fromStdString(fDiffSize.string()), false);
+    nDiff->setSize(contentC.size());
+    nDiff->setLastModifiedTime(120);
+
+    auto nZero = std::make_unique<DiskNode>("zero_bytes.dat", QString::fromStdString(fZero.string()), false);
+    nZero->setSize(0);
+    nZero->setLastModifiedTime(50);
+
+    root->addChild(std::move(nDup1));
+    root->addChild(std::move(nDup2));
+    root->addChild(std::move(nDup3));
+    root->addChild(std::move(nCollision));
+    root->addChild(std::move(nDiff));
+    root->addChild(std::move(nZero));
+
+    root->calculateBottomUpSizes();
+
+    // 4. Test MD5 scan algorithm
+    DuplicateScanResult md5Result = DuplicateFinder::scanDuplicates(root.get(), HashAlgorithm::Md5);
+
+    assert(md5Result.totalGroups == 1);
+    assert(md5Result.groups.size() == 1);
+    assert(md5Result.groups[0].files.size() == 3);
+    assert(md5Result.groups[0].fileSize == static_cast<int64_t>(contentA.size()));
+    assert(md5Result.totalDuplicateFiles == 3);
+    assert(md5Result.totalWastedBytes == static_cast<int64_t>(2 * contentA.size()));
+    assert(!md5Result.groups[0].hash.isEmpty());
+
+    // Verify same_size_diff_content was properly rejected by cryptographic hash
+    for (const auto& f : md5Result.groups[0].files) {
+        (void)f;
+        assert(f.path != QString::fromStdString(fCollisionSameSize.string()));
+        assert(f.path != QString::fromStdString(fZero.string()));
+    }
+
+    // 5. Test SHA-256 scan algorithm
+    DuplicateScanResult shaResult = DuplicateFinder::scanDuplicates(root.get(), HashAlgorithm::Sha256);
+    assert(shaResult.totalGroups == 1);
+    assert(shaResult.groups.size() == 1);
+    assert(shaResult.groups[0].files.size() == 3);
+    assert(shaResult.totalWastedBytes == static_cast<int64_t>(2 * contentA.size()));
+    assert(shaResult.groups[0].hash.length() == 64); // SHA-256 hex string length
+
+    // Cleanup sandbox
+    fs::remove_all(tempDir);
+
+    std::cout << "  -> PASSED! Duplicate detection, multi-pass filtering, and wasted storage calculation verified." << std::endl;
+}
+
 int main(int argc, char* argv[]) {
     QCoreApplication app(argc, argv);
 
@@ -335,6 +456,7 @@ int main(int argc, char* argv[]) {
     testSnapshotEngine();
     testTreemapAnimationGeometry();
     testFileAgeHeatmap();
+    testDuplicateFinderAlgorithm();
 
     std::cout << "========================================" << std::endl;
     std::cout << "  ALL AUTOMATED UNIT TESTS PASSED!      " << std::endl;
