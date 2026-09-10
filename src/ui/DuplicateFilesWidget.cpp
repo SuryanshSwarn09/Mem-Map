@@ -7,6 +7,14 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QFileIconProvider>
+#include <QMessageBox>
+#include <QDesktopServices>
+#include <QUrl>
+#include <QProcess>
+#include <QClipboard>
+#include <QGuiApplication>
+#include <QDir>
+#include <QFile>
 
 DuplicateFilesWidget::DuplicateFilesWidget(QWidget* parent)
     : QWidget(parent)
@@ -559,7 +567,162 @@ void DuplicateFilesWidget::deselectAll() {
     updateSelectedStats();
 }
 
-// Scaffolds to be populated in upcoming micro-commits:
-void DuplicateFilesWidget::deleteSelectedToTrash() {}
-void DuplicateFilesWidget::showContextMenu(const QPoint& pos) { Q_UNUSED(pos); }
+void DuplicateFilesWidget::deleteSelectedToTrash() {
+    int selectedCount = 0;
+    int64_t selectedBytes = 0;
+    for (const auto& group : m_result.groups) {
+        for (const auto& file : group.files) {
+            if (file.isSelectedForDeletion) {
+                selectedCount++;
+                selectedBytes += file.size;
+            }
+        }
+    }
+
+    if (selectedCount == 0) return;
+
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this,
+        QStringLiteral("Confirm Recycle Bin Deletion"),
+        QStringLiteral("Are you sure you want to move %1 duplicate file(s) (%2) to the Recycle Bin?\n\nFiles can be restored from the Recycle Bin if needed.")
+            .arg(selectedCount)
+            .arg(DiskNode::formatSize(static_cast<uint64_t>(selectedBytes))),
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::No
+    );
+
+    if (reply != QMessageBox::Yes) return;
+
+    int successCount = 0;
+    int failCount = 0;
+
+    for (auto& group : m_result.groups) {
+        auto it = group.files.begin();
+        while (it != group.files.end()) {
+            if (it->isSelectedForDeletion) {
+                if (QFile::moveToTrash(it->path)) {
+                    successCount++;
+                    it = group.files.erase(it);
+                } else {
+                    failCount++;
+                    it->isSelectedForDeletion = false;
+                    ++it;
+                }
+            } else {
+                ++it;
+            }
+        }
+    }
+
+    // Filter out groups with fewer than 2 files remaining
+    auto groupIt = m_result.groups.begin();
+    while (groupIt != m_result.groups.end()) {
+        if (groupIt->files.size() < 2) {
+            groupIt = m_result.groups.erase(groupIt);
+        } else {
+            ++groupIt;
+        }
+    }
+
+    // Recompute summary metrics
+    m_result.totalGroups = static_cast<int64_t>(m_result.groups.size());
+    m_result.totalDuplicateFiles = 0;
+    m_result.totalWastedBytes = 0;
+    for (const auto& group : m_result.groups) {
+        m_result.totalDuplicateFiles += group.files.size();
+        m_result.totalWastedBytes += group.wastedBytes();
+    }
+
+    updateKpiDisplay();
+    populateTree();
+    updateSelectedStats();
+
+    if (failCount > 0) {
+        QMessageBox::warning(
+            this,
+            QStringLiteral("Partial Deletion"),
+            QStringLiteral("Moved %1 file(s) to Recycle Bin, but failed to move %2 file(s) (permission denied or locked by another process).")
+                .arg(successCount)
+                .arg(failCount)
+        );
+    }
+
+    m_statusLabel->setText(QStringLiteral("Recycle Bin cleanup complete: %1 file(s) moved to trash.")
+        .arg(successCount));
+}
+
+void DuplicateFilesWidget::showContextMenu(const QPoint& pos) {
+    QTreeWidgetItem* item = m_treeWidget->itemAt(pos);
+    if (!item) return;
+
+    // Child file item
+    if (item->parent() != nullptr) {
+        QString filePath = item->data(0, Qt::UserRole).toString();
+        if (filePath.isEmpty()) return;
+
+        QMenu menu(this);
+        menu.setStyleSheet(QStringLiteral(
+            "QMenu { background-color: #161B22; color: #C9D1D9; border: 1px solid #30363D; padding: 4px; }"
+            "QMenu::item { padding: 6px 20px; border-radius: 4px; }"
+            "QMenu::item:selected { background-color: #1F6FEB; color: #FFFFFF; }"
+            "QMenu::separator { height: 1px; background-color: #30363D; margin: 4px 8px; }"
+        ));
+
+        QAction* openAct = menu.addAction(QStringLiteral("Open File"));
+        QAction* explorerAct = menu.addAction(QStringLiteral("Show in Explorer"));
+        QAction* copyPathAct = menu.addAction(QStringLiteral("Copy File Path"));
+        menu.addSeparator();
+        QAction* trashAct = menu.addAction(QStringLiteral("Move This File to Recycle Bin"));
+
+        QAction* selected = menu.exec(m_treeWidget->viewport()->mapToGlobal(pos));
+        if (selected == openAct) {
+            QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
+        } else if (selected == explorerAct) {
+            QString nativePath = QDir::toNativeSeparators(filePath);
+            QProcess::startDetached(QStringLiteral("explorer.exe"), {QStringLiteral("/select,"), nativePath});
+        } else if (selected == copyPathAct) {
+            QGuiApplication::clipboard()->setText(filePath);
+        } else if (selected == trashAct) {
+            auto reply = QMessageBox::question(
+                this,
+                QStringLiteral("Confirm Recycle Bin Deletion"),
+                QStringLiteral("Move \"%1\" to the Recycle Bin?").arg(QFileInfo(filePath).fileName()),
+                QMessageBox::Yes | QMessageBox::No,
+                QMessageBox::No
+            );
+            if (reply == QMessageBox::Yes) {
+                if (QFile::moveToTrash(filePath)) {
+                    int groupIdx = item->data(1, Qt::UserRole).toInt();
+                    int fileIdx = item->data(2, Qt::UserRole).toInt();
+                    if (groupIdx >= 0 && groupIdx < static_cast<int>(m_result.groups.size())) {
+                        auto& grp = m_result.groups[groupIdx];
+                        if (fileIdx >= 0 && fileIdx < static_cast<int>(grp.files.size())) {
+                            grp.files.erase(grp.files.begin() + fileIdx);
+                        }
+                    }
+                    auto git = m_result.groups.begin();
+                    while (git != m_result.groups.end()) {
+                        if (git->files.size() < 2) {
+                            git = m_result.groups.erase(git);
+                        } else {
+                            ++git;
+                        }
+                    }
+                    m_result.totalGroups = static_cast<int64_t>(m_result.groups.size());
+                    m_result.totalDuplicateFiles = 0;
+                    m_result.totalWastedBytes = 0;
+                    for (const auto& g : m_result.groups) {
+                        m_result.totalDuplicateFiles += g.files.size();
+                        m_result.totalWastedBytes += g.wastedBytes();
+                    }
+                    updateKpiDisplay();
+                    populateTree();
+                    updateSelectedStats();
+                } else {
+                    QMessageBox::warning(this, QStringLiteral("Error"), QStringLiteral("Failed to move file to Recycle Bin."));
+                }
+            }
+        }
+    }
+}
 
