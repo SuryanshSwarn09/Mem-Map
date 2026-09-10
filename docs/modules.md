@@ -71,3 +71,22 @@ An in-depth architectural examination of Mem-Map's core subsystems, data structu
   - **Interactive Canvas Treemap**: Emits an embedded HTML5 Canvas with client-side JavaScript supporting hover tooltips, click drill-down, and zoom-out.
   - **Air-Gapped Operation**: 100% self-contained without external CDN references, fonts, or scripts.
   - **Tabular Data Support**: Also provides UTF-8 BOM CSV exports for Excel compatibility and raw JSON tree serialization.
+
+---
+
+## 7. Module G: Duplicate File Finder Subsystem (`DuplicateFinder`)
+- **Header / Source**: `src/core/DuplicateFinder.h`, `src/core/DuplicateFinder.cpp`, `src/ui/DuplicateFilesWidget.h`, `src/ui/DuplicateFilesWidget.cpp`
+- **Responsibilities**: Multi-pass hash-verified duplicate detection, wasted storage accounting, smart auto-selection policies, and safe Recycle Bin purging.
+- **Key Engineering Decisions**:
+  - **3-Pass Progressive Filter Pipeline**:
+    - *Pass 1 (Size Bucketing)*: $O(N)$ partitioning of regular files into exact byte-size buckets (`std::unordered_map<int64_t, std::vector<DiskNode*>>`). Single-file buckets and 0-byte files are pruned with zero disk read I/O.
+    - *Pass 2 (Partial 4KB Header Hashing)*: Computes MD5 on the initial 4096-byte chunk, weeding out size collisions before reading large files.
+    - *Pass 3 (Chunked Full Content Hashing)*: Reads matching candidates in 64 KB streaming buffers through `QCryptographicHash` (MD5 or SHA-256) with responsive cancellation check points.
+  - **Wasted Space Accounting**:
+    - For each group of $K$ identical files of size $S$, $(K - 1) \times S$ bytes are quantified as recoverable storage, sorted descending by impact.
+  - **Interactive Management UI (`DuplicateFilesWidget`)**:
+    - **KPI Metrics Header**: Displays Total Wasted Space (styled in high-contrast Coral Red `#F85149`), Duplicate Groups, Duplicate Files, and Live Selected Cleanup metrics.
+    - **Smart Auto-Selection**: Offers 1-click selection heuristics including `Keep Newest` (marks all older copies), `Keep Oldest` (marks all newer copies), and `Select All Duplicates` (retains only the primary file).
+    - **Live Search Filtering**: Real-time substring query filtering across filenames and full paths.
+    - **Safe Recycle Bin Deletion**: Deletes files using `QFile::moveToTrash()` to ensure deleted duplicates can be recovered from the Windows Recycle Bin if needed.
+

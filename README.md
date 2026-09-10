@@ -20,15 +20,15 @@
 |  [Root > Users > surya > Downloads]                                                                     |
 +---------------------------------------------------------------------------------------------------------+
 | QSplitter                                                                                               |
-|  +-------------------------------------------------+  +----------------------------------------------+  |
-|  | Tabs: [Directory Tree] [Types] [Top 100] [Diff] |  | Visualizer: [Treemap] [Sunburst]             |  |
-|  | Name         | Usage% | Size    | Files         |  | Color:      [File Type / File Age]           |  |
-|  | > Videos     | [====] | 42.1 GB | 120           |  | - Squarified Treemap Layout (Bruls et al.)   |  |
-|  | > Music      | [==  ] | 12.4 GB | 850           |  | - DaisyDisk-Style Multi-Ring Sunburst        |  |
-|  | > Documents  | [=   ] |  1.2 GB | 320           |  | - Thermal File Age Heatmap (Hot vs Stale)    |  |
-|  | > Code       | [    ] |  0.4 GB | 540           |  | - Hardware-Accelerated Smooth Zoom Animation |  |
-|  |                                                 |  | - Hover Tooltips & Double-Click Drill-Down   |  |
-|  +-------------------------------------------------+  +----------------------------------------------+  |
+|  +-------------------------------------------------------------+  +-------------------------------------------+  |
+|  | Tabs: [Directory Tree] [Types] [Top 100] [Diff] [Duplicates]  |  | Visualizer: [Treemap] [Sunburst]          |  |
+|  | Name         | Usage% | Size    | Files                     |  | Color:      [File Type / File Age]        |  |
+|  | > Videos     | [====] | 42.1 GB | 120                       |  | - Squarified Treemap Layout (Bruls et al.)|  |
+|  | > Music      | [==  ] | 12.4 GB | 850                       |  | - DaisyDisk-Style Multi-Ring Sunburst     |  |
+|  | > Documents  | [=   ] |  1.2 GB | 320                       |  | - Thermal File Age Heatmap (Hot vs Stale) |  |
+|  | > Code       | [    ] |  0.4 GB | 540                       |  | - Hardware-Accelerated Smooth Zoom        |  |
+|  |                                                             |  | - Hover Tooltips & Double-Click Drill-Down|  |
+|  +-------------------------------------------------------------+  +-------------------------------------------+  |
 +---------------------------------------------------------------------------------------------------------+
 | StatusBar: Scanning: C:\Users\... | Files: 145,210 | Total: 84.2 GB | Time: 04.2s                       |
 +---------------------------------------------------------------------------------------------------------+
@@ -42,6 +42,7 @@
 - **Squarified Treemap with Smooth Zoom**: High aspect-ratio tile layout with hardware-accelerated dual-buffer cross-fading (`QEasingCurve::OutCubic` over 280ms) for fluid drill-down.
 - **DaisyDisk-Style Radial Sunburst**: 360-degree concentric annular rings displaying hierarchical folder sizes up to 4 levels deep, featuring a click-to-ascend center hub.
 - **Thermal File Age Heatmap Mode**: 6-tier thermal coloring (Hot Red `< 7d` to Cold Slate `> 2yr`) with recursive directory timestamp rollup to immediately identify abandoned disk hogs.
+- **Duplicate File Finder & Safe Cleanup**: Multi-pass hash engine (byte-size grouping, 4KB header check, chunked MD5/SHA-256) calculating exact wasted space, smart auto-selection (Keep Newest/Oldest), and safe Recycle Bin deletion.
 - **Disk Snapshot Comparison (Diff View)**: Save portable `.mmap` snapshots to compare any two points in time and instantly pinpoint where disk space disappeared.
 - **Zero-Dependency HTML5 Reports**: Export standalone, interactive offline reports with embedded canvas treemaps, CSV spreadsheet data, and raw JSON trees.
 - **Native Polish & Shortcuts**: Embedded Windows PE multi-size icon, system tray compatibility, and Explorer-like keyboard shortcuts.
@@ -114,7 +115,7 @@ For in-depth architectural deep dives, Mermaid.js sequence and class diagrams, c
 | **Phase 5: Native Shell** | Windows PE icon embedding, global shortcuts (`F5`, `Backspace`, `Ctrl+O/S/E`).| `app.rc`, `app.ico`, `MainWindow.cpp` | Shortcut dispatch checks | Synced |
 | **Phase 6: Zoom Animation** | Dual-buffer scaling, cubic easing cross-fading, input interaction guards. | `TreemapWidget.cpp` | `testTreemapAnimationGeometry` | Synced |
 | **Phase 7: Age Heatmap** | 6-tier thermal coloring, C++20 `last_write_time`, age legend bar. | `DiskNode.cpp`, `TreemapWidget.cpp`, `SunburstWidget.cpp` | `testFileAgeHeatmap` | Synced |
-| **Phase 8 (Planned)** | Duplicate File Finder (hash comparison), visualizer real-time search filter. | Planned | Next test suite | In Queue |
+| **Phase 8: Duplicate Finder** | Multi-pass hash engine (MD5/SHA-256), wasted space tracker, smart auto-select (newest/oldest), safe Recycle Bin cleanup. | `DuplicateFinder.cpp`, `DuplicateFilesWidget.cpp`, `MainWindow.cpp` | `testDuplicateFinderAlgorithm` | Synced |
 
 ---
 

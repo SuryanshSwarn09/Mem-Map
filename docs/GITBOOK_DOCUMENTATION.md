@@ -56,6 +56,7 @@ graph TD
         TF["TopFilesWidget (Top 100 List)"]
         ES["ExtensionStatsWidget (File Types)"]
         SD["SnapshotDiffWidget (Visual Diff)"]
+        DF["DuplicateFilesWidget (Duplicate Finder & Cleaner)"]
         LEG["HeatmapLegend (Thermal Swatch Bar)"]
     end
 
@@ -63,6 +64,7 @@ graph TD
         SE["ScannerEngine (QThread Worker)"]
         DN["DiskNode (Hierarchical Memory Tree)"]
         TL["TreemapLayout (Squarified Algorithm)"]
+        DFF["DuplicateFinder (Multi-Pass Hash Worker)"]
     end
 
     subgraph Persistence_Layer ["Persistence & Export Layer"]
@@ -96,6 +98,8 @@ graph TD
     MW -->|Exports active tree| RE
     MW -->|Saves / Loads .mmap| SN
     SN -->|Compares two trees| SD
+    MW -->|Binds root node| DF
+    DF -->|Executes 3-pass scan| DFF
 ```
 
 ### 2.2 Threading & Asynchronous Scan Data Flow
@@ -386,6 +390,8 @@ Mem-Map undergoes continuous verification through automated regression testing a
   -> PASSED! Interpolation math validated at all stages (t=0.0, 0.5, 1.0).
 [TEST] Running testFileAgeHeatmap...
   -> PASSED! Thermal color mapping, relative age formatting, and timestamp rollup verified.
+[TEST] Running testDuplicateFinderAlgorithm...
+  -> PASSED! Duplicate detection, multi-pass filtering, and wasted storage calculation verified.
 ========================================
   ALL AUTOMATED UNIT TESTS PASSED!      
 ========================================
@@ -409,7 +415,7 @@ To guarantee that code evolution and documentation never drift apart, every impr
 | **Phase 5: Native Shell** | Windows PE icon embedding, global shortcuts (`F5`, `Backspace`, `Ctrl+O/S/E`).| `app.rc`, `app.ico`, `MainWindow.cpp` | `549e822..144722a` | Shortcut dispatch checks | ✅ Synced |
 | **Phase 6: Zoom Animation** | Dual-buffer scaling, cubic easing cross-fading, input interaction guards. | `TreemapWidget.cpp` | `5a5c042..d94f318` | `testTreemapAnimationGeometry` | ✅ Synced |
 | **Phase 7: Age Heatmap** | 6-tier thermal coloring, C++20 `last_write_time`, age legend bar. | `DiskNode.cpp`, `TreemapWidget.cpp`, `SunburstWidget.cpp` | `b65590d..3d7ae7a` | `testFileAgeHeatmap` | ✅ Synced |
-| **Phase 8 (Planned)** | Duplicate File Finder (hash comparison), visualizer real-time search filter. | Planned | Next | Next test suite | 🔄 In Queue |
+| **Phase 8: Duplicate Finder** | Multi-pass hash engine (MD5/SHA-256), wasted space tracker, smart auto-select (newest/oldest), safe Recycle Bin cleanup. | `DuplicateFinder.cpp`, `DuplicateFilesWidget.cpp`, `MainWindow.cpp` | `9779951..406d00c` | `testDuplicateFinderAlgorithm` | ✅ Synced |
 
 ### 7.2 Parallel Documentation Maintenance Protocol
 

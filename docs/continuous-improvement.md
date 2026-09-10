@@ -16,7 +16,7 @@ This project enforces parallel synchronization between source code and documenta
 | **Phase 5: Native Shell** | Windows PE icon embedding, global shortcuts (`F5`, `Backspace`, `Ctrl+O/S/E`).| `app.rc`, `app.ico`, `MainWindow.cpp` | `549e822..144722a` | Shortcut dispatch checks | ✅ Synced |
 | **Phase 6: Zoom Animation** | Dual-buffer scaling, cubic easing cross-fading, input interaction guards. | `TreemapWidget.cpp` | `5a5c042..d94f318` | `testTreemapAnimationGeometry` | ✅ Synced |
 | **Phase 7: Age Heatmap** | 6-tier thermal coloring, C++20 `last_write_time`, age legend bar. | `DiskNode.cpp`, `TreemapWidget.cpp`, `SunburstWidget.cpp` | `b65590d..3d7ae7a` | `testFileAgeHeatmap` | ✅ Synced |
-| **Phase 8 (Planned)** | Duplicate File Finder (hash comparison), visualizer real-time search filter. | Planned | Next | Next test suite | 🔄 In Queue |
+| **Phase 8: Duplicate Finder** | Multi-pass hash engine (MD5/SHA-256), wasted space tracker, smart auto-select (newest/oldest), safe Recycle Bin cleanup. | `DuplicateFinder.cpp`, `DuplicateFilesWidget.cpp`, `MainWindow.cpp` | `9779951..406d00c` | `testDuplicateFinderAlgorithm` | ✅ Synced |
 
 ---
 
