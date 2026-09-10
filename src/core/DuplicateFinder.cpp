@@ -46,6 +46,35 @@ QByteArray computePartialHeaderHash(const QString& filePath, qint64 maxBytes = 4
     hash.addData(header);
     return hash.result();
 }
+
+QString computeFullFileHash(const QString& filePath, 
+                            QCryptographicHash::Algorithm algo,
+                            const std::atomic<bool>* cancelFlag) 
+{
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return QString();
+    }
+
+    QCryptographicHash hash(algo);
+    constexpr qint64 bufferSize = 65536; // 64 KB streaming buffer
+    QByteArray buffer;
+    buffer.resize(bufferSize);
+
+    while (!file.atEnd()) {
+        if (cancelFlag && cancelFlag->load()) {
+            return QString();
+        }
+        qint64 bytesRead = file.read(buffer.data(), bufferSize);
+        if (bytesRead > 0) {
+            hash.addData(buffer.constData(), static_cast<int>(bytesRead));
+        } else if (bytesRead < 0) {
+            return QString();
+        }
+    }
+
+    return QString::fromLatin1(hash.result().toHex());
+}
 } // anonymous namespace
 
 DuplicateFinder::DuplicateFinder(QObject* parent)
