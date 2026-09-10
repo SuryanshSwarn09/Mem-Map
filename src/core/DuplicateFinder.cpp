@@ -35,6 +35,17 @@ std::vector<std::vector<DiskNode*>> filterCandidateSizeGroups(
               });
     return candidateGroups;
 }
+
+QByteArray computePartialHeaderHash(const QString& filePath, qint64 maxBytes = 4096) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return QByteArray();
+    }
+    QByteArray header = file.read(maxBytes);
+    QCryptographicHash hash(QCryptographicHash::Md5);
+    hash.addData(header);
+    return hash.result();
+}
 } // anonymous namespace
 
 DuplicateFinder::DuplicateFinder(QObject* parent)
