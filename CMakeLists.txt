@@ -49,6 +49,8 @@ set(UI_SOURCES
     src/ui/BreadcrumbWidget.cpp
     src/ui/SnapshotDiffWidget.h
     src/ui/SnapshotDiffWidget.cpp
+    src/ui/DuplicateFilesWidget.h
+    src/ui/DuplicateFilesWidget.cpp
     src/ui/MainWindow.h
     src/ui/MainWindow.cpp
 )

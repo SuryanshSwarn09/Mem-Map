@@ -20,6 +20,7 @@
 #include "ExtensionStatsWidget.h"
 #include "TopFilesWidget.h"
 #include "SnapshotDiffWidget.h"
+#include "DuplicateFilesWidget.h"
 
 class QStackedWidget;
 
@@ -85,6 +86,7 @@ private:
     ExtensionStatsWidget* m_extStatsWidget{nullptr};
     TopFilesWidget* m_topFilesWidget{nullptr};
     SnapshotDiffWidget* m_snapshotDiffWidget{nullptr};
+    DuplicateFilesWidget* m_duplicateWidget{nullptr};
 
     // Visualization Stack & Switcher
     QWidget* m_visContainer{nullptr};

@@ -253,6 +253,10 @@ void MainWindow::setupUi() {
     m_snapshotDiffWidget = new SnapshotDiffWidget(this);
     m_tabs->addTab(m_snapshotDiffWidget, QStringLiteral("Snapshot Diff"));
 
+    // Tab 5: Duplicate File Finder
+    m_duplicateWidget = new DuplicateFilesWidget(this);
+    m_tabs->addTab(m_duplicateWidget, QStringLiteral("Duplicate Files"));
+
     // Right Pane: Visualization Container with View Switcher
     m_visContainer = new QWidget(this);
     QVBoxLayout* visLayout = new QVBoxLayout(m_visContainer);
@@ -530,6 +534,7 @@ void MainWindow::onScanFinished(std::shared_ptr<DiskNode> rootNode, qint64 elaps
         // Populate analytics tabs
         m_extStatsWidget->populateFromNode(m_rootNode.get());
         m_topFilesWidget->populateFromNode(m_rootNode.get(), 100);
+        m_duplicateWidget->setRootNode(m_rootNode.get());
 
         // Update breadcrumb
         m_breadcrumb->setRootAndCurrent(m_rootNode.get(), m_rootNode.get());
@@ -539,6 +544,7 @@ void MainWindow::onScanFinished(std::shared_ptr<DiskNode> rootNode, qint64 elaps
         m_sunburstWidget->setRootNode(nullptr);
         m_extStatsWidget->clear();
         m_topFilesWidget->clear();
+        m_duplicateWidget->clear();
         m_breadcrumb->setRootAndCurrent(nullptr, nullptr);
     }
 }

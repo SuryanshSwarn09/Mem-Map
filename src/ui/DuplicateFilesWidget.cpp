@@ -343,7 +343,11 @@ void DuplicateFilesWidget::createResultsTree() {
     m_treeWidget->setColumnWidth(2, 100);
     m_treeWidget->setColumnWidth(3, 160);
 
-    layout()->addWidget(m_treeWidget, 1);
+    if (auto box = qobject_cast<QBoxLayout*>(layout())) {
+        box->addWidget(m_treeWidget, 1);
+    } else {
+        layout()->addWidget(m_treeWidget);
+    }
 }
 
 void DuplicateFilesWidget::populateTree() {
