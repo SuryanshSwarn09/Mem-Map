@@ -475,11 +475,91 @@ void DuplicateFilesWidget::updateSelectedStats() {
     }
 }
 
+static void syncTreeCheckStates(QTreeWidget* treeWidget, const DuplicateScanResult& result) {
+    if (!treeWidget) return;
+    for (int i = 0; i < treeWidget->topLevelItemCount(); ++i) {
+        QTreeWidgetItem* groupItem = treeWidget->topLevelItem(i);
+        int groupIdx = groupItem->data(0, Qt::UserRole).toInt();
+        if (groupIdx < 0 || groupIdx >= static_cast<int>(result.groups.size())) continue;
+
+        const auto& group = result.groups[groupIdx];
+        for (int j = 0; j < groupItem->childCount(); ++j) {
+            QTreeWidgetItem* child = groupItem->child(j);
+            int fileIdx = child->data(2, Qt::UserRole).toInt();
+            if (fileIdx >= 0 && fileIdx < static_cast<int>(group.files.size())) {
+                child->setCheckState(0, group.files[fileIdx].isSelectedForDeletion ? Qt::Checked : Qt::Unchecked);
+            }
+        }
+    }
+}
+
+void DuplicateFilesWidget::selectKeepNewest() {
+    m_isUpdatingCheckState = true;
+    for (auto& group : m_result.groups) {
+        if (group.files.empty()) continue;
+        size_t newestIdx = 0;
+        int64_t newestTime = group.files[0].lastModified;
+        for (size_t i = 1; i < group.files.size(); ++i) {
+            if (group.files[i].lastModified > newestTime) {
+                newestTime = group.files[i].lastModified;
+                newestIdx = i;
+            }
+        }
+        for (size_t i = 0; i < group.files.size(); ++i) {
+            group.files[i].isSelectedForDeletion = (i != newestIdx);
+        }
+    }
+    syncTreeCheckStates(m_treeWidget, m_result);
+    m_isUpdatingCheckState = false;
+    updateSelectedStats();
+}
+
+void DuplicateFilesWidget::selectKeepOldest() {
+    m_isUpdatingCheckState = true;
+    for (auto& group : m_result.groups) {
+        if (group.files.empty()) continue;
+        size_t oldestIdx = 0;
+        int64_t oldestTime = group.files[0].lastModified;
+        for (size_t i = 1; i < group.files.size(); ++i) {
+            if (group.files[i].lastModified < oldestTime) {
+                oldestTime = group.files[i].lastModified;
+                oldestIdx = i;
+            }
+        }
+        for (size_t i = 0; i < group.files.size(); ++i) {
+            group.files[i].isSelectedForDeletion = (i != oldestIdx);
+        }
+    }
+    syncTreeCheckStates(m_treeWidget, m_result);
+    m_isUpdatingCheckState = false;
+    updateSelectedStats();
+}
+
+void DuplicateFilesWidget::selectAllDuplicates() {
+    m_isUpdatingCheckState = true;
+    for (auto& group : m_result.groups) {
+        for (size_t i = 0; i < group.files.size(); ++i) {
+            group.files[i].isSelectedForDeletion = (i > 0);
+        }
+    }
+    syncTreeCheckStates(m_treeWidget, m_result);
+    m_isUpdatingCheckState = false;
+    updateSelectedStats();
+}
+
+void DuplicateFilesWidget::deselectAll() {
+    m_isUpdatingCheckState = true;
+    for (auto& group : m_result.groups) {
+        for (auto& f : group.files) {
+            f.isSelectedForDeletion = false;
+        }
+    }
+    syncTreeCheckStates(m_treeWidget, m_result);
+    m_isUpdatingCheckState = false;
+    updateSelectedStats();
+}
+
 // Scaffolds to be populated in upcoming micro-commits:
-void DuplicateFilesWidget::selectKeepNewest() {}
-void DuplicateFilesWidget::selectKeepOldest() {}
-void DuplicateFilesWidget::selectAllDuplicates() {}
-void DuplicateFilesWidget::deselectAll() {}
 void DuplicateFilesWidget::deleteSelectedToTrash() {}
 void DuplicateFilesWidget::showContextMenu(const QPoint& pos) { Q_UNUSED(pos); }
 
