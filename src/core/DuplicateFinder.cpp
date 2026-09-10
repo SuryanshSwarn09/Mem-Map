@@ -14,8 +14,8 @@ void collectFilesBySize(DiskNode* node, std::unordered_map<int64_t, std::vector<
             sizeMap[node->size()].push_back(node);
         }
     } else {
-        for (size_t i = 0; i < node->childCount(); ++i) {
-            collectFilesBySize(node->child(i), sizeMap);
+        for (const auto& child : node->children()) {
+            collectFilesBySize(child.get(), sizeMap);
         }
     }
 }
@@ -67,7 +67,7 @@ QString computeFullFileHash(const QString& filePath,
         }
         qint64 bytesRead = file.read(buffer.data(), bufferSize);
         if (bytesRead > 0) {
-            hash.addData(buffer.constData(), static_cast<int>(bytesRead));
+            hash.addData(QByteArrayView(buffer.constData(), bytesRead));
         } else if (bytesRead < 0) {
             return QString();
         }

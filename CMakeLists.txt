@@ -26,6 +26,8 @@ set(CORE_SOURCES
     src/core/ReportExporter.cpp
     src/core/SnapshotEngine.h
     src/core/SnapshotEngine.cpp
+    src/core/DuplicateFinder.h
+    src/core/DuplicateFinder.cpp
 )
 
 set(UI_SOURCES
