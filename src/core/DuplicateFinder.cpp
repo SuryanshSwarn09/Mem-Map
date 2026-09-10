@@ -19,6 +19,22 @@ void collectFilesBySize(DiskNode* node, std::unordered_map<int64_t, std::vector<
         }
     }
 }
+
+std::vector<std::vector<DiskNode*>> filterCandidateSizeGroups(
+    const std::unordered_map<int64_t, std::vector<DiskNode*>>& sizeMap) 
+{
+    std::vector<std::vector<DiskNode*>> candidateGroups;
+    for (const auto& [size, files] : sizeMap) {
+        if (files.size() >= 2) {
+            candidateGroups.push_back(files);
+        }
+    }
+    std::sort(candidateGroups.begin(), candidateGroups.end(),
+              [](const std::vector<DiskNode*>& a, const std::vector<DiskNode*>& b) {
+                  return (!a.empty() && !b.empty()) ? a.front()->size() > b.front()->size() : false;
+              });
+    return candidateGroups;
+}
 } // anonymous namespace
 
 DuplicateFinder::DuplicateFinder(QObject* parent)
