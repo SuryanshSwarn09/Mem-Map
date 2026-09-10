@@ -3,6 +3,10 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFrame>
+#include <QHeaderView>
+#include <QFileInfo>
+#include <QDateTime>
+#include <QFileIconProvider>
 
 DuplicateFilesWidget::DuplicateFilesWidget(QWidget* parent)
     : QWidget(parent)
@@ -299,16 +303,136 @@ void DuplicateFilesWidget::onScanCancelled() {
     m_statusLabel->setText(QStringLiteral("Duplicate scan cancelled by user."));
 }
 
+void DuplicateFilesWidget::createResultsTree() {
+    m_treeWidget = new QTreeWidget(this);
+    m_treeWidget->setHeaderLabels({
+        QStringLiteral("Duplicate File / Group"),
+        QStringLiteral("Full Path"),
+        QStringLiteral("Size"),
+        QStringLiteral("Last Modified")
+    });
+    m_treeWidget->setAlternatingRowColors(true);
+    m_treeWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    m_treeWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_treeWidget, &QTreeWidget::customContextMenuRequested, this, &DuplicateFilesWidget::showContextMenu);
+    connect(m_treeWidget, &QTreeWidget::itemChanged, this, &DuplicateFilesWidget::onItemChanged);
+
+    // Style Tree Widget for GitHub Dark / Mem-Map aesthetic
+    m_treeWidget->setStyleSheet(QStringLiteral(
+        "QTreeWidget { background-color: #0D1117; color: #C9D1D9; border: 1px solid #30363D; border-radius: 8px; alternate-background-color: #161B22; }"
+        "QTreeWidget::item { padding: 4px 6px; border-bottom: 1px solid #21262D; }"
+        "QTreeWidget::item:hover { background-color: #1F242C; }"
+        "QTreeWidget::item:selected { background-color: #1F6FEB; color: #FFFFFF; }"
+        "QHeaderView::section { background-color: #161B22; color: #8B949E; padding: 6px 10px; border: none; border-right: 1px solid #30363D; border-bottom: 1px solid #30363D; font-weight: bold; font-size: 11px; }"
+    ));
+
+    QHeaderView* header = m_treeWidget->header();
+    header->setSectionResizeMode(0, QHeaderView::Interactive);
+    header->setSectionResizeMode(1, QHeaderView::Stretch);
+    header->setSectionResizeMode(2, QHeaderView::Interactive);
+    header->setSectionResizeMode(3, QHeaderView::Interactive);
+    m_treeWidget->setColumnWidth(0, 320);
+    m_treeWidget->setColumnWidth(2, 100);
+    m_treeWidget->setColumnWidth(3, 160);
+
+    layout()->addWidget(m_treeWidget, 1);
+}
+
+void DuplicateFilesWidget::populateTree() {
+    m_isUpdatingCheckState = true;
+    m_treeWidget->clear();
+
+    QFileIconProvider iconProvider;
+
+    for (size_t groupIdx = 0; groupIdx < m_result.groups.size(); ++groupIdx) {
+        const auto& group = m_result.groups[groupIdx];
+        QTreeWidgetItem* groupItem = new QTreeWidgetItem(m_treeWidget);
+        
+        QString shortHash = group.hash.left(8);
+        QString groupTitle = QStringLiteral("Group %1: %2 duplicates | %3 each | Wasting %4 | [Hash: %5...]")
+            .arg(groupIdx + 1)
+            .arg(group.files.size())
+            .arg(DiskNode::formatSize(group.fileSize))
+            .arg(DiskNode::formatSize(group.wastedBytes()))
+            .arg(shortHash);
+
+        groupItem->setText(0, groupTitle);
+        groupItem->setText(1, QStringLiteral("%1 matching files").arg(group.files.size()));
+        groupItem->setText(2, DiskNode::formatSize(group.wastedBytes()));
+        groupItem->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
+        
+        QFont boldFont = groupItem->font(0);
+        boldFont.setBold(true);
+        groupItem->setFont(0, boldFont);
+        groupItem->setForeground(0, QBrush(QColor(QStringLiteral("#58A6FF"))));
+        groupItem->setBackground(0, QBrush(QColor(QStringLiteral("#161B22"))));
+        groupItem->setBackground(1, QBrush(QColor(QStringLiteral("#161B22"))));
+        groupItem->setBackground(2, QBrush(QColor(QStringLiteral("#161B22"))));
+        groupItem->setBackground(3, QBrush(QColor(QStringLiteral("#161B22"))));
+        groupItem->setData(0, Qt::UserRole, static_cast<int>(groupIdx));
+
+        for (size_t fileIdx = 0; fileIdx < group.files.size(); ++fileIdx) {
+            const auto& df = group.files[fileIdx];
+            QTreeWidgetItem* fileItem = new QTreeWidgetItem(groupItem);
+            
+            QFileInfo fi(df.path);
+            fileItem->setIcon(0, iconProvider.icon(fi));
+            fileItem->setText(0, fi.fileName());
+            fileItem->setText(1, df.path);
+            fileItem->setText(2, DiskNode::formatSize(df.size));
+            fileItem->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
+            fileItem->setText(3, QDateTime::fromSecsSinceEpoch(df.lastModified).toString(QStringLiteral("yyyy-MM-dd hh:mm:ss")));
+            
+            fileItem->setFlags(fileItem->flags() | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+            fileItem->setCheckState(0, df.isSelectedForDeletion ? Qt::Checked : Qt::Unchecked);
+
+            fileItem->setData(0, Qt::UserRole, df.path);
+            fileItem->setData(1, Qt::UserRole, static_cast<int>(groupIdx));
+            fileItem->setData(2, Qt::UserRole, static_cast<int>(fileIdx));
+        }
+
+        groupItem->setExpanded(true);
+    }
+
+    m_isUpdatingCheckState = false;
+    updateSelectedStats();
+}
+
+void DuplicateFilesWidget::filterFiles(const QString& query) {
+    QString trimmed = query.trimmed();
+    bool hasFilter = !trimmed.isEmpty();
+
+    for (int i = 0; i < m_treeWidget->topLevelItemCount(); ++i) {
+        QTreeWidgetItem* groupItem = m_treeWidget->topLevelItem(i);
+        bool anyChildVisible = false;
+
+        for (int j = 0; j < groupItem->childCount(); ++j) {
+            QTreeWidgetItem* child = groupItem->child(j);
+            if (!hasFilter) {
+                child->setHidden(false);
+                anyChildVisible = true;
+            } else {
+                bool match = child->text(0).contains(trimmed, Qt::CaseInsensitive) ||
+                             child->text(1).contains(trimmed, Qt::CaseInsensitive);
+                child->setHidden(!match);
+                if (match) anyChildVisible = true;
+            }
+        }
+
+        groupItem->setHidden(!anyChildVisible);
+        if (hasFilter && anyChildVisible) {
+            groupItem->setExpanded(true);
+        }
+    }
+}
+
 // Scaffolds to be populated in upcoming micro-commits:
-void DuplicateFilesWidget::createResultsTree() {}
-void DuplicateFilesWidget::populateTree() {}
 void DuplicateFilesWidget::updateSelectedStats() {}
 void DuplicateFilesWidget::selectKeepNewest() {}
 void DuplicateFilesWidget::selectKeepOldest() {}
 void DuplicateFilesWidget::selectAllDuplicates() {}
 void DuplicateFilesWidget::deselectAll() {}
 void DuplicateFilesWidget::deleteSelectedToTrash() {}
-void DuplicateFilesWidget::filterFiles(const QString& query) { Q_UNUSED(query); }
 void DuplicateFilesWidget::onItemChanged(QTreeWidgetItem* item, int column) { Q_UNUSED(item); Q_UNUSED(column); }
 void DuplicateFilesWidget::showContextMenu(const QPoint& pos) { Q_UNUSED(pos); }
 
