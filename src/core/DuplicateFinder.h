@@ -20,3 +20,17 @@ struct DuplicateGroup {
         return files.size() > 1 ? (static_cast<int64_t>(files.size()) - 1) * fileSize : 0;
     }
 };
+
+enum class HashAlgorithm {
+    Md5,
+    Sha256
+};
+
+struct DuplicateScanResult {
+    std::vector<DuplicateGroup> groups;
+    int64_t totalWastedBytes{0};
+    int64_t totalDuplicateFiles{0};
+    int64_t totalGroups{0};
+    int64_t scannedCandidates{0};
+    int64_t elapsedMs{0};
+};
