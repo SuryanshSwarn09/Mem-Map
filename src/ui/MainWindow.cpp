@@ -371,33 +371,35 @@ void MainWindow::setupUi() {
 
     rootLayout->addWidget(m_mainSplitter, 1);
 
-    // Bottom Status Bar
-    QHBoxLayout* statusLayout = new QHBoxLayout();
-    statusLayout->setContentsMargins(4, 2, 4, 2);
-    statusLayout->setSpacing(12);
+    // Bottom Status Telemetry Dock
+    QFrame* statusDock = new QFrame(this);
+    statusDock->setObjectName(QStringLiteral("statusDock"));
+    QHBoxLayout* statusLayout = new QHBoxLayout(statusDock);
+    statusLayout->setContentsMargins(10, 4, 10, 4);
+    statusLayout->setSpacing(10);
 
-    m_statusLabel = new QLabel(QStringLiteral("Ready. Select a drive or folder to scan."), this);
-    m_statusLabel->setStyleSheet(QStringLiteral("color: #8B949E;"));
+    m_statusLabel = new QLabel(QStringLiteral("● Ready. Select a target and click Scan Now."), this);
+    m_statusLabel->setStyleSheet(QStringLiteral("font-weight: 500; font-size: 12px;"));
 
     m_statsLabel = new QLabel(QStringLiteral("Files: 0 | Total: 0 B"), this);
-    m_statsLabel->setStyleSheet(QStringLiteral("color: #58A6FF; font-weight: bold;"));
+    m_statsLabel->setObjectName(QStringLiteral("statsPill"));
 
     m_timeLabel = new QLabel(QStringLiteral("Time: 00:00.0"), this);
-    m_timeLabel->setStyleSheet(QStringLiteral("color: #7EE787;"));
+    m_timeLabel->setObjectName(QStringLiteral("timePill"));
 
     m_progressBar = new QProgressBar(this);
-    m_progressBar->setMaximumHeight(14);
+    m_progressBar->setMaximumHeight(10);
     m_progressBar->setRange(0, 100);
     m_progressBar->setValue(0);
     m_progressBar->setTextVisible(false);
-    m_progressBar->setFixedWidth(140);
+    m_progressBar->setFixedWidth(130);
 
     statusLayout->addWidget(m_statusLabel, 1);
     statusLayout->addWidget(m_statsLabel);
     statusLayout->addWidget(m_timeLabel);
     statusLayout->addWidget(m_progressBar);
 
-    rootLayout->addLayout(statusLayout);
+    rootLayout->addWidget(statusDock);
 }
 
 void MainWindow::applyDarkTheme() {
@@ -461,7 +463,7 @@ void MainWindow::onStartScanClicked() {
 
 void MainWindow::onCancelScanClicked() {
     m_scanner->cancelScan();
-    m_statusLabel->setText(QStringLiteral("Cancelling scan..."));
+    m_statusLabel->setText(QStringLiteral("● Cancelling scan..."));
 }
 
 void MainWindow::onScanStarted(const QString& rootPath) {
@@ -471,7 +473,7 @@ void MainWindow::onScanStarted(const QString& rootPath) {
     m_driveCombo->setEnabled(false);
 
     m_progressBar->setRange(0, 0); // Indeterminate pulsing
-    m_statusLabel->setText(QStringLiteral("Scanning: ") + rootPath);
+    m_statusLabel->setText(QStringLiteral("● Scanning: ") + rootPath);
     m_statsLabel->setText(QStringLiteral("Files: 0 | Total: 0 B"));
 }
 
@@ -482,7 +484,7 @@ void MainWindow::onScanProgress(quint64 files, quint64 bytes, const QString& cur
 
     QFontMetrics fm(m_statusLabel->font());
     QString elidedPath = fm.elidedText(currentFolder, Qt::ElideMiddle, 380);
-    m_statusLabel->setText(QStringLiteral("Scanning: ") + elidedPath);
+    m_statusLabel->setText(QStringLiteral("● Scanning: ") + elidedPath);
 }
 
 void MainWindow::onScanFinished(std::shared_ptr<DiskNode> rootNode, qint64 elapsedMs, bool wasCancelled) {
@@ -498,9 +500,9 @@ void MainWindow::onScanFinished(std::shared_ptr<DiskNode> rootNode, qint64 elaps
     m_timeLabel->setText(QString::asprintf("Time: %.1fs", sec));
 
     if (wasCancelled) {
-        m_statusLabel->setText(QStringLiteral("Scan cancelled by user. Partial results displayed."));
+        m_statusLabel->setText(QStringLiteral("● Scan cancelled by user. Partial results displayed."));
     } else {
-        m_statusLabel->setText(QStringLiteral("Scan complete!"));
+        m_statusLabel->setText(QStringLiteral("● Scan complete!"));
     }
 
     m_rootNode = rootNode;

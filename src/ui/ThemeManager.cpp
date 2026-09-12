@@ -130,6 +130,15 @@ QString ThemeManager::generateApplicationStyleSheet() const {
         "QFrame#headerBar { "
         "   background-color: %3; border: 1px solid %4; border-radius: 10px; "
         "}"
+        "QFrame#statusDock { "
+        "   background-color: %3; border: 1px solid %4; border-radius: 8px; "
+        "}"
+        "QLabel#statsPill { "
+        "   background-color: %5; border: 1px solid %12; border-radius: 9px; padding: 2px 10px; color: %7; font-weight: 600; font-size: 11px; "
+        "}"
+        "QLabel#timePill { "
+        "   background-color: %5; border: 1px solid %12; border-radius: 9px; padding: 2px 10px; color: %14; font-weight: 600; font-size: 11px; "
+        "}"
 
         // Buttons
         "QPushButton { "
