@@ -1,5 +1,7 @@
 #include "TreemapWidget.h"
+#include "ThemeManager.h"
 #include <QPainter>
+#include <QPainterPath>
 #include <QPaintEvent>
 #include <QMouseEvent>
 #include <QToolTip>
@@ -22,6 +24,10 @@ TreemapWidget::TreemapWidget(QWidget* parent)
     setFocusPolicy(Qt::StrongFocus);
     setAttribute(Qt::WA_OpaquePaintEvent, true);
     setupAnimation();
+
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, [this](ThemePreset) {
+        update();
+    });
 }
 
 void TreemapWidget::setRootNode(DiskNode* rootNode) {
@@ -223,7 +229,10 @@ void TreemapWidget::renderTreemap(QPainter* painter, const QRectF& bounds) {
     Q_UNUSED(bounds);
     QFont labelFont = font();
     labelFont.setPointSize(8);
+    labelFont.setWeight(QFont::Medium);
     painter->setFont(labelFont);
+
+    const auto& tokens = ThemeManager::instance().tokens();
 
     for (const auto& tile : m_tiles) {
         DiskNode* node = tile.node;
@@ -235,7 +244,7 @@ void TreemapWidget::renderTreemap(QPainter* painter, const QRectF& bounds) {
             baseColor = DiskNode::getColorForAge(node->lastModifiedTime());
         } else {
             if (node->isDirectory()) {
-                baseColor = QColor(48, 55, 68);
+                baseColor = tokens.surfaceHover.darker(110);
             } else {
                 baseColor = DiskNode::getColorForExtension(node->extension());
             }
@@ -244,48 +253,67 @@ void TreemapWidget::renderTreemap(QPainter* painter, const QRectF& bounds) {
         bool isHovered = (node == m_hoveredNode);
         bool isSelected = (node == m_selectedNode);
 
-        // Cushion gradient effect
+        // Cushion gradient effect with specular lighting
         QLinearGradient grad(r.topLeft(), r.bottomRight());
         if (isHovered) {
-            grad.setColorAt(0.0, baseColor.lighter(135));
-            grad.setColorAt(1.0, baseColor.lighter(105));
-        } else if (isSelected) {
-            grad.setColorAt(0.0, baseColor.lighter(120));
+            grad.setColorAt(0.0, baseColor.lighter(138));
+            grad.setColorAt(0.5, baseColor.lighter(118));
             grad.setColorAt(1.0, baseColor);
+        } else if (isSelected) {
+            grad.setColorAt(0.0, baseColor.lighter(130));
+            grad.setColorAt(0.5, baseColor.lighter(110));
+            grad.setColorAt(1.0, baseColor.darker(110));
         } else {
-            grad.setColorAt(0.0, baseColor.lighter(115));
-            grad.setColorAt(0.8, baseColor);
-            grad.setColorAt(1.0, baseColor.darker(125));
+            grad.setColorAt(0.0, baseColor.lighter(118));
+            grad.setColorAt(0.6, baseColor);
+            grad.setColorAt(1.0, baseColor.darker(130));
         }
 
-        painter->setBrush(grad);
+        // Draw tile with rounded corners and cushioning
+        if (r.width() >= 6.0 && r.height() >= 6.0) {
+            qreal cornerRadius = qMin(3.0, qMin(r.width(), r.height()) / 4.0);
+            QPainterPath path;
+            QRectF innerRect = r.adjusted(0.5, 0.5, -0.5, -0.5);
+            path.addRoundedRect(innerRect, cornerRadius, cornerRadius);
 
-        // Border styling
-        if (isSelected) {
-            painter->setPen(QPen(QColor(255, 215, 0), 2.0)); // Bright Gold for selection
-        } else if (isHovered) {
-            painter->setPen(QPen(QColor(255, 255, 255), 1.5)); // White for hover
+            painter->fillPath(path, grad);
+
+            if (isSelected) {
+                // Radiant selection glow
+                painter->setPen(QPen(QColor(255, 215, 0, 240), 2.0));
+                painter->drawPath(path);
+            } else if (isHovered) {
+                painter->setPen(QPen(QColor(255, 255, 255, 230), 1.5));
+                painter->drawPath(path);
+            } else {
+                painter->setPen(QPen(tokens.surfaceDeep, 1.0));
+                painter->drawPath(path);
+            }
         } else {
-            painter->setPen(QPen(QColor(18, 19, 23, 220), 0.8)); // Dark subtle separator
+            painter->fillRect(r, baseColor);
         }
-
-        painter->drawRect(r);
 
         // Text label if space permits
         if (r.width() >= 48.0 && r.height() >= 24.0) {
-            QRectF textRect = r.adjusted(3, 2, -3, -2);
-            painter->setPen(QColor(240, 243, 246));
-
+            QRectF textRect = r.adjusted(4, 3, -4, -2);
             QString displayText = node->name();
             QFontMetrics fm(labelFont);
             QString elidedName = fm.elidedText(displayText, Qt::ElideMiddle, static_cast<int>(textRect.width()));
 
+            // Drop shadow for crisp text over any gradient color
+            painter->setPen(QColor(0, 0, 0, 160));
+            painter->drawText(textRect.adjusted(1, 1, 1, 1), Qt::AlignTop | Qt::AlignLeft, elidedName);
+
+            painter->setPen(QColor(245, 248, 252));
             painter->drawText(textRect, Qt::AlignTop | Qt::AlignLeft, elidedName);
 
-            if (r.height() >= 36.0) {
-                QRectF sizeRect = textRect.adjusted(0, fm.height(), 0, 0);
-                painter->setPen(QColor(200, 210, 220, 200));
-                painter->drawText(sizeRect, Qt::AlignTop | Qt::AlignLeft, DiskNode::formatSize(node->size()));
+            if (r.height() >= 38.0) {
+                QRectF sizeRect = textRect.adjusted(0, fm.height() + 1, 0, 0);
+                QString sizeStr = DiskNode::formatSize(node->size());
+                painter->setPen(QColor(0, 0, 0, 140));
+                painter->drawText(sizeRect.adjusted(1, 1, 1, 1), Qt::AlignTop | Qt::AlignLeft, sizeStr);
+                painter->setPen(QColor(210, 220, 235, 220));
+                painter->drawText(sizeRect, Qt::AlignTop | Qt::AlignLeft, sizeStr);
             }
         }
     }
@@ -297,8 +325,9 @@ void TreemapWidget::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::TextAntialiasing, true);
 
-    // Background
-    painter.fillRect(rect(), QColor(24, 25, 29));
+    // Background from theme tokens
+    const auto& tokens = ThemeManager::instance().tokens();
+    painter.fillRect(rect(), tokens.surfaceDeep);
 
     // Handle Active Zoom Animation
     if (m_isAnimating && !m_prevPixmap.isNull() && !m_nextPixmap.isNull()) {
