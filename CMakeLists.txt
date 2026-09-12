@@ -28,6 +28,7 @@ set(CORE_SOURCES
     src/core/SnapshotEngine.cpp
     src/core/DuplicateFinder.h
     src/core/DuplicateFinder.cpp
+    src/core/CreatorProfile.h
 )
 
 set(UI_SOURCES
