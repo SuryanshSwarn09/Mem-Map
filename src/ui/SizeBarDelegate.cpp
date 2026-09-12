@@ -1,4 +1,5 @@
 #include "SizeBarDelegate.h"
+#include "ThemeManager.h"
 #include <QPainter>
 #include <QPainterPath>
 
@@ -13,39 +14,50 @@ void SizeBarDelegate::paint(QPainter* painter, const QStyleOptionViewItem& optio
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, true);
 
+    const auto& tokens = ThemeManager::instance().tokens();
+
     // Selected or hovered background
     if (option.state & QStyle::State_Selected) {
-        painter->fillRect(option.rect, option.palette.highlight());
+        painter->fillRect(option.rect, tokens.surfaceActive);
+    } else if (option.state & QStyle::State_MouseOver) {
+        painter->fillRect(option.rect, tokens.surfaceHover);
     }
 
     // Bar dimensions
     int padX = 6;
     int padY = 5;
-    QRect barRect = option.rect.adjusted(padX, padY, -padX, -padY);
+    QRectF barRect = option.rect.adjusted(padX, padY, -padX, -padY);
 
     if (barRect.width() > 10 && barRect.height() > 4) {
+        qreal pillRadius = barRect.height() / 2.0;
+
         // Track background
         QPainterPath trackPath;
-        trackPath.addRoundedRect(barRect, 3, 3);
-        painter->fillPath(trackPath, QColor(45, 52, 64, 180));
+        trackPath.addRoundedRect(barRect, pillRadius, pillRadius);
+        painter->fillPath(trackPath, tokens.surfaceCard);
+
+        // Subtle track border
+        painter->setPen(QPen(tokens.borderSubtle, 1.0));
+        painter->drawPath(trackPath);
 
         // Fill bar
-        int fillWidth = static_cast<int>(barRect.width() * (qBound(0.0, percent, 100.0) / 100.0));
-        if (fillWidth > 2) {
-            QRect filledRect(barRect.x(), barRect.y(), fillWidth, barRect.height());
+        qreal fillRatio = qBound(0.0, percent, 100.0) / 100.0;
+        qreal fillWidth = barRect.width() * fillRatio;
+        if (fillWidth > 2.0) {
+            QRectF filledRect(barRect.x(), barRect.y(), fillWidth, barRect.height());
             QPainterPath fillPath;
-            fillPath.addRoundedRect(filledRect, 3, 3);
+            fillPath.addRoundedRect(filledRect, pillRadius, pillRadius);
 
             QLinearGradient grad(filledRect.topLeft(), filledRect.topRight());
             if (percent > 70.0) {
-                grad.setColorAt(0.0, QColor(244, 67, 54));   // Red
-                grad.setColorAt(1.0, QColor(255, 87, 34));
+                grad.setColorAt(0.0, tokens.accentRed);
+                grad.setColorAt(1.0, QColor(255, 107, 107));
             } else if (percent > 35.0) {
-                grad.setColorAt(0.0, QColor(255, 152, 0));  // Orange
-                grad.setColorAt(1.0, QColor(255, 193, 7));
+                grad.setColorAt(0.0, tokens.accentAmber);
+                grad.setColorAt(1.0, QColor(255, 217, 61));
             } else {
-                grad.setColorAt(0.0, QColor(33, 150, 243));  // Blue
-                grad.setColorAt(1.0, QColor(0, 188, 212));   // Cyan
+                grad.setColorAt(0.0, tokens.accentPrimary);
+                grad.setColorAt(1.0, tokens.accentCyan);
             }
 
             painter->fillPath(fillPath, grad);
@@ -53,10 +65,16 @@ void SizeBarDelegate::paint(QPainter* painter, const QStyleOptionViewItem& optio
 
         // Percentage text
         QString text = QString::asprintf("%.1f%%", percent);
-        painter->setPen(QColor(235, 240, 245));
         QFont f = option.font;
         f.setPointSize(8);
+        f.setWeight(QFont::DemiBold);
         painter->setFont(f);
+
+        // Subtle drop shadow for readability
+        painter->setPen(QColor(0, 0, 0, 180));
+        painter->drawText(option.rect.adjusted(1, 1, 1, 1), Qt::AlignCenter, text);
+
+        painter->setPen(tokens.textPrimary);
         painter->drawText(option.rect, Qt::AlignCenter, text);
     }
 
