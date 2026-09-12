@@ -15,6 +15,7 @@
 #include <QShortcut>
 #include "ReportExporter.h"
 #include "SnapshotEngine.h"
+#include "AboutDialog.h"
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -206,6 +207,16 @@ void MainWindow::setupUi() {
     connect(actCompareWith, &QAction::triggered, this, &MainWindow::onCompareWithSnapshotClicked);
     connect(actCompareTwo, &QAction::triggered, this, &MainWindow::onCompareTwoSnapshotsClicked);
     topBar->addWidget(m_btnSnapshot);
+
+    // Creator & Social Links button
+    m_btnAbout = new QPushButton(QStringLiteral("👤 Creator & Links"), this);
+    m_btnAbout->setToolTip(QStringLiteral("About Mem-Map, creator profile (Suryansh Swarn), and social links"));
+    m_btnAbout->setStyleSheet(QStringLiteral(
+        "QPushButton { background-color: #21262D; color: #C9D1D9; border: 1px solid #30363D; border-radius: 6px; padding: 5px 12px; font-weight: 500; font-size: 12px; }"
+        "QPushButton:hover { background-color: #30363D; color: #58A6FF; border-color: #58A6FF; }"
+    ));
+    connect(m_btnAbout, &QPushButton::clicked, this, &MainWindow::onAboutClicked);
+    topBar->addWidget(m_btnAbout);
 
     topBar->addStretch();
 
@@ -817,4 +828,9 @@ void MainWindow::onCompareTwoSnapshotsClicked() {
 
     m_snapshotDiffWidget->setDiffData(std::move(diffRoot), summary);
     m_tabs->setCurrentWidget(m_snapshotDiffWidget);
+}
+
+void MainWindow::onAboutClicked() {
+    AboutDialog dlg(this);
+    dlg.exec();
 }

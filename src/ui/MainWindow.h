@@ -63,6 +63,7 @@ private slots:
     void onCompareWithSnapshotClicked();
     void onCompareTwoSnapshotsClicked();
     void toggleColorMode();
+    void onAboutClicked();
 
 private:
     void setupUi();
@@ -76,6 +77,7 @@ private:
     QPushButton* m_btnCancel{nullptr};
     QPushButton* m_btnExport{nullptr};
     QPushButton* m_btnSnapshot{nullptr};
+    QPushButton* m_btnAbout{nullptr};
     BreadcrumbWidget* m_breadcrumb{nullptr};
 
     // Central Splitter & Views

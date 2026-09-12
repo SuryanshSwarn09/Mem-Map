@@ -52,6 +52,8 @@ set(UI_SOURCES
     src/ui/SnapshotDiffWidget.cpp
     src/ui/DuplicateFilesWidget.h
     src/ui/DuplicateFilesWidget.cpp
+    src/ui/AboutDialog.h
+    src/ui/AboutDialog.cpp
     src/ui/MainWindow.h
     src/ui/MainWindow.cpp
 )
