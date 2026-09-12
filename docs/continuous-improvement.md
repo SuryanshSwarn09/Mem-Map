@@ -17,6 +17,7 @@ This project enforces parallel synchronization between source code and documenta
 | **Phase 6: Zoom Animation** | Dual-buffer scaling, cubic easing cross-fading, input interaction guards. | `TreemapWidget.cpp` | `5a5c042..d94f318` | `testTreemapAnimationGeometry` | ✅ Synced |
 | **Phase 7: Age Heatmap** | 6-tier thermal coloring, C++20 `last_write_time`, age legend bar. | `DiskNode.cpp`, `TreemapWidget.cpp`, `SunburstWidget.cpp` | `b65590d..3d7ae7a` | `testFileAgeHeatmap` | ✅ Synced |
 | **Phase 8: Duplicate Finder** | Multi-pass hash engine (MD5/SHA-256), wasted space tracker, smart auto-select (newest/oldest), safe Recycle Bin cleanup. | `DuplicateFinder.cpp`, `DuplicateFilesWidget.cpp`, `MainWindow.cpp` | `9779951..406d00c` | `testDuplicateFinderAlgorithm` | ✅ Synced |
+| **Phase 9: Creator & Socials** | Creator profile modal, social media action links (GitHub, LinkedIn, X, Email), clipboard sharing for Suryansh Swarn. | `CreatorProfile.h`, `AboutDialog.cpp`, `MainWindow.cpp` | `cecbe2c..ca29cbd` | `testCreatorProfile` | ✅ Synced |
 
 ---
 

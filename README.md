@@ -16,7 +16,7 @@
 ```
 +---------------------------------------------------------------------------------------------------------+
 |                                              Mem-Map (Qt 6)                                             |
-|  [Target: C:\ (320 GB free)] [Browse...] [Scan Now] [Cancel]  [Export Report v] [Snapshot v]            |
+|  [Target: C:\ (320 GB free)] [Browse...] [Scan Now] [Cancel]  [Export Report v] [Snapshot v] [About Creator] |
 |  [Root > Users > surya > Downloads]                                                                     |
 +---------------------------------------------------------------------------------------------------------+
 | QSplitter                                                                                               |
@@ -45,6 +45,7 @@
 - **Duplicate File Finder & Safe Cleanup**: Multi-pass hash engine (byte-size grouping, 4KB header check, chunked MD5/SHA-256) calculating exact wasted space, smart auto-selection (Keep Newest/Oldest), and safe Recycle Bin deletion.
 - **Disk Snapshot Comparison (Diff View)**: Save portable `.mmap` snapshots to compare any two points in time and instantly pinpoint where disk space disappeared.
 - **Zero-Dependency HTML5 Reports**: Export standalone, interactive offline reports with embedded canvas treemaps, CSV spreadsheet data, and raw JSON trees.
+- **Creator Profile & Social Hub**: Dedicated profile and links modal showcasing creator Suryansh Swarn (@SuryanshSwarn09), with one-click access to the GitHub repository, GitHub profile, email, LinkedIn, X/Twitter, and clipboard sharing.
 - **Native Polish & Shortcuts**: Embedded Windows PE multi-size icon, system tray compatibility, and Explorer-like keyboard shortcuts.
 
 ---
@@ -116,6 +117,7 @@ For in-depth architectural deep dives, Mermaid.js sequence and class diagrams, c
 | **Phase 6: Zoom Animation** | Dual-buffer scaling, cubic easing cross-fading, input interaction guards. | `TreemapWidget.cpp` | `testTreemapAnimationGeometry` | Synced |
 | **Phase 7: Age Heatmap** | 6-tier thermal coloring, C++20 `last_write_time`, age legend bar. | `DiskNode.cpp`, `TreemapWidget.cpp`, `SunburstWidget.cpp` | `testFileAgeHeatmap` | Synced |
 | **Phase 8: Duplicate Finder** | Multi-pass hash engine (MD5/SHA-256), wasted space tracker, smart auto-select (newest/oldest), safe Recycle Bin cleanup. | `DuplicateFinder.cpp`, `DuplicateFilesWidget.cpp`, `MainWindow.cpp` | `testDuplicateFinderAlgorithm` | Synced |
+| **Phase 9: Creator & Socials** | Creator profile modal, social media action links (GitHub, LinkedIn, X, Email), clipboard sharing for Suryansh Swarn. | `CreatorProfile.h`, `AboutDialog.cpp`, `MainWindow.cpp` | `testCreatorProfile` | Synced |
 
 ---
 

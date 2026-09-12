@@ -90,3 +90,14 @@ An in-depth architectural examination of Mem-Map's core subsystems, data structu
     - **Live Search Filtering**: Real-time substring query filtering across filenames and full paths.
     - **Safe Recycle Bin Deletion**: Deletes files using `QFile::moveToTrash()` to ensure deleted duplicates can be recovered from the Windows Recycle Bin if needed.
 
+---
+
+## 8. Module H: Creator Profile & Socials Subsystem (`AboutDialog`, `CreatorProfile`)
+- **Header / Source**: `src/core/CreatorProfile.h`, `src/ui/AboutDialog.h`, `src/ui/AboutDialog.cpp`
+- **Responsibilities**: Encapsulates project attribution, creator credentials (Suryansh Swarn, `@SuryanshSwarn09`), interactive social links, and repository metadata.
+- **Key Engineering Decisions**:
+  - **Domain Model Isolation**: `CreatorProfile` encapsulates handles, email, and social URLs with strict validation (`isValid()`, `getEmailUrl()`), enabling easy customization and unit testing.
+  - **Rich Modern Desktop Styling**: `AboutDialog` implements GitHub Dark aesthetics (`#0D1117`, `#161B22`, `#30363D`), prominent badges, role descriptions, and tech stack chips.
+  - **Direct System Integration**: Integrates `QDesktopServices::openUrl` for launching web profiles (GitHub, LinkedIn, X) and default email clients.
+  - **Clipboard Acceleration**: Incorporates `QClipboard` with interactive feedback to facilitate sharing the repository URL.
+

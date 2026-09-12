@@ -57,6 +57,7 @@ graph TD
         ES["ExtensionStatsWidget (File Types)"]
         SD["SnapshotDiffWidget (Visual Diff)"]
         DF["DuplicateFilesWidget (Duplicate Finder & Cleaner)"]
+        AD["AboutDialog (Creator Profile & Socials)"]
         LEG["HeatmapLegend (Thermal Swatch Bar)"]
     end
 
@@ -65,6 +66,7 @@ graph TD
         DN["DiskNode (Hierarchical Memory Tree)"]
         TL["TreemapLayout (Squarified Algorithm)"]
         DFF["DuplicateFinder (Multi-Pass Hash Worker)"]
+        CP["CreatorProfile (Identity & Social URLs)"]
     end
 
     subgraph Persistence_Layer ["Persistence & Export Layer"]
@@ -100,6 +102,8 @@ graph TD
     SN -->|Compares two trees| SD
     MW -->|Binds root node| DF
     DF -->|Executes 3-pass scan| DFF
+    MW -->|Opens modal| AD
+    AD -->|Reads metadata| CP
 ```
 
 ### 2.2 Threading & Asynchronous Scan Data Flow
@@ -392,6 +396,8 @@ Mem-Map undergoes continuous verification through automated regression testing a
   -> PASSED! Thermal color mapping, relative age formatting, and timestamp rollup verified.
 [TEST] Running testDuplicateFinderAlgorithm...
   -> PASSED! Duplicate detection, multi-pass filtering, and wasted storage calculation verified.
+[TEST] Running testCreatorProfile...
+  -> PASSED! Creator profile metadata, handles, and URLs verified for Suryansh Swarn.
 ========================================
   ALL AUTOMATED UNIT TESTS PASSED!      
 ========================================
@@ -416,6 +422,7 @@ To guarantee that code evolution and documentation never drift apart, every impr
 | **Phase 6: Zoom Animation** | Dual-buffer scaling, cubic easing cross-fading, input interaction guards. | `TreemapWidget.cpp` | `5a5c042..d94f318` | `testTreemapAnimationGeometry` | ✅ Synced |
 | **Phase 7: Age Heatmap** | 6-tier thermal coloring, C++20 `last_write_time`, age legend bar. | `DiskNode.cpp`, `TreemapWidget.cpp`, `SunburstWidget.cpp` | `b65590d..3d7ae7a` | `testFileAgeHeatmap` | ✅ Synced |
 | **Phase 8: Duplicate Finder** | Multi-pass hash engine (MD5/SHA-256), wasted space tracker, smart auto-select (newest/oldest), safe Recycle Bin cleanup. | `DuplicateFinder.cpp`, `DuplicateFilesWidget.cpp`, `MainWindow.cpp` | `9779951..406d00c` | `testDuplicateFinderAlgorithm` | ✅ Synced |
+| **Phase 9: Creator & Socials** | Creator profile modal, social media action links (GitHub, LinkedIn, X, Email), clipboard sharing for Suryansh Swarn. | `CreatorProfile.h`, `AboutDialog.cpp`, `MainWindow.cpp` | `cecbe2c..ca29cbd` | `testCreatorProfile` | ✅ Synced |
 
 ### 7.2 Parallel Documentation Maintenance Protocol
 
