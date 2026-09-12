@@ -1,4 +1,5 @@
 #include "SunburstWidget.h"
+#include "ThemeManager.h"
 #include <QPainter>
 #include <QPaintEvent>
 #include <QMouseEvent>
@@ -21,6 +22,10 @@ SunburstWidget::SunburstWidget(QWidget* parent)
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
     setAttribute(Qt::WA_OpaquePaintEvent, true);
+
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, [this](ThemePreset) {
+        update();
+    });
 }
 
 void SunburstWidget::setColorMode(ColorMode mode) {
@@ -163,11 +168,13 @@ void SunburstWidget::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::TextAntialiasing, true);
 
-    // Deep Dark Background
-    painter.fillRect(rect(), QColor(18, 21, 27));
+    const auto& tokens = ThemeManager::instance().tokens();
+
+    // Deep Canvas Background
+    painter.fillRect(rect(), tokens.surfaceDeep);
 
     if (!m_currentRoot || m_slices.empty()) {
-        painter.setPen(QColor(130, 140, 155));
+        painter.setPen(tokens.textMuted);
         painter.drawText(rect(), Qt::AlignCenter,
                          m_currentRoot ? QStringLiteral("Folder is empty or contains 0-byte files")
                                        : QStringLiteral("No scan data available. Start a scan to view sunburst."));
@@ -185,15 +192,15 @@ void SunburstWidget::paintEvent(QPaintEvent* event) {
             baseColor = DiskNode::getColorForAge(node->lastModifiedTime());
         } else {
             if (node->isDirectory()) {
-                baseColor = QColor(60, 70, 85);
+                baseColor = tokens.surfaceCard.lighter(140);
             } else {
                 baseColor = DiskNode::getColorForExtension(node->extension());
             }
         }
 
-        // Slightly brighten or darken based on depth
+        // Depth toning
         if (slice.depth > 0) {
-            baseColor = baseColor.darker(100 + slice.depth * 12);
+            baseColor = baseColor.darker(100 + slice.depth * 10);
         }
 
         if (isHovered) {
@@ -205,34 +212,36 @@ void SunburstWidget::paintEvent(QPaintEvent* event) {
         painter.setBrush(baseColor);
 
         if (isSelected) {
-            painter.setPen(QPen(QColor(255, 215, 0), 2.0)); // Gold selection
+            painter.setPen(QPen(QColor(255, 215, 0, 250), 2.2)); // Radiant Gold selection
         } else if (isHovered) {
-            painter.setPen(QPen(QColor(255, 255, 255), 1.5)); // White hover
+            painter.setPen(QPen(QColor(255, 255, 255, 240), 1.6)); // Crisp White hover
         } else {
-            painter.setPen(QPen(QColor(18, 21, 27, 240), 1.0)); // Clean dark gap
+            painter.setPen(QPen(tokens.surfaceDeep, 1.2)); // Antialiased annular gap
         }
 
         painter.drawPath(slice.path);
     }
 
-    // 2. Draw Center Hub (DaisyDisk style circular core)
+    // 2. Draw Center Hub (DaisyDisk style circular core with radial depth)
     QRectF hubRect(m_center.x() - m_hubRadius, m_center.y() - m_hubRadius,
                    2.0 * m_hubRadius, 2.0 * m_hubRadius);
 
     QRadialGradient hubGrad(m_center, m_hubRadius);
     if (m_hoveredCenter) {
-        hubGrad.setColorAt(0.0, QColor(45, 55, 72));
-        hubGrad.setColorAt(1.0, QColor(30, 38, 50));
+        hubGrad.setColorAt(0.0, tokens.surfaceHover.lighter(120));
+        hubGrad.setColorAt(0.8, tokens.surfaceHover);
+        hubGrad.setColorAt(1.0, tokens.surfaceCard);
     } else {
-        hubGrad.setColorAt(0.0, QColor(32, 38, 48));
-        hubGrad.setColorAt(1.0, QColor(22, 27, 34));
+        hubGrad.setColorAt(0.0, tokens.surfaceCard.lighter(115));
+        hubGrad.setColorAt(0.7, tokens.surfaceCard);
+        hubGrad.setColorAt(1.0, tokens.surfaceBase);
     }
 
     painter.setBrush(hubGrad);
     if (m_hoveredCenter) {
-        painter.setPen(QPen(QColor(88, 166, 255), 2.0));
+        painter.setPen(QPen(tokens.borderFocus, 2.0));
     } else {
-        painter.setPen(QPen(QColor(52, 60, 72), 1.5));
+        painter.setPen(QPen(tokens.borderMuted, 1.4));
     }
     painter.drawEllipse(hubRect);
 
@@ -242,7 +251,6 @@ void SunburstWidget::paintEvent(QPaintEvent* event) {
     titleFont.setBold(true);
     titleFont.setPointSize(m_hubRadius > 70 ? 10 : 9);
     painter.setFont(titleFont);
-    painter.setPen(QColor(240, 243, 246));
 
     QFontMetrics fm(titleFont);
     QString name = m_currentRoot->name().isEmpty() ? m_currentRoot->fullPath() : m_currentRoot->name();
@@ -253,13 +261,18 @@ void SunburstWidget::paintEvent(QPaintEvent* event) {
     double startY = m_center.y() - totalTextH / 2.0;
 
     QRectF nameRect(textRect.left(), startY, textRect.width(), fm.height());
+    // Drop shadow
+    painter.setPen(QColor(0, 0, 0, 160));
+    painter.drawText(nameRect.adjusted(1, 1, 1, 1), Qt::AlignCenter, elidedName);
+    painter.setPen(tokens.textPrimary);
     painter.drawText(nameRect, Qt::AlignCenter, elidedName);
 
     // Size text
     QFont sizeFont = font();
+    sizeFont.setBold(true);
     sizeFont.setPointSize(m_hubRadius > 70 ? 9 : 8);
     painter.setFont(sizeFont);
-    painter.setPen(QColor(88, 166, 255)); // Bright Blue
+    painter.setPen(tokens.accentCyan);
     QRectF sizeRect(textRect.left(), startY + fm.height() + 2, textRect.width(), fm.height());
     painter.drawText(sizeRect, Qt::AlignCenter, DiskNode::formatSize(m_currentRoot->size()));
 
@@ -268,7 +281,7 @@ void SunburstWidget::paintEvent(QPaintEvent* event) {
         QFont upFont = font();
         upFont.setPointSize(7);
         painter.setFont(upFont);
-        painter.setPen(m_hoveredCenter ? QColor(255, 255, 255) : QColor(139, 148, 158));
+        painter.setPen(m_hoveredCenter ? tokens.textPrimary : tokens.textMuted);
         QRectF upRect(textRect.left(), startY + fm.height() * 2 + 4, textRect.width(), fm.height());
         painter.drawText(upRect, Qt::AlignCenter, QStringLiteral("▲ Click to Go Up"));
     }
