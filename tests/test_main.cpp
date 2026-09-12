@@ -7,6 +7,7 @@
 #include "core/DiskNode.h"
 #include "core/ScannerEngine.h"
 #include "core/DuplicateFinder.h"
+#include "core/CreatorProfile.h"
 #include "ui/TreemapLayout.h"
 
 namespace fs = std::filesystem;
@@ -442,6 +443,30 @@ void testDuplicateFinderAlgorithm() {
     std::cout << "  -> PASSED! Duplicate detection, multi-pass filtering, and wasted storage calculation verified." << std::endl;
 }
 
+void testCreatorProfile() {
+    std::cout << "[TEST] Running testCreatorProfile..." << std::endl;
+
+    CreatorProfile profile = CreatorProfile::defaultProfile();
+    assert(profile.isValid());
+    assert(profile.name == QStringLiteral("Suryansh Swarn"));
+    assert(profile.handle == QStringLiteral("@SuryanshSwarn09"));
+    assert(profile.githubProfileUrl == QStringLiteral("https://github.com/SuryanshSwarn09"));
+    assert(profile.githubRepoUrl == QStringLiteral("https://github.com/SuryanshSwarn09/Mem-Map"));
+    assert(profile.email == QStringLiteral("suryanshswarn@gmail.com"));
+    assert(profile.getEmailUrl().toString() == QStringLiteral("mailto:suryanshswarn@gmail.com"));
+    assert(!profile.linkedinUrl.isEmpty());
+    assert(!profile.twitterUrl.isEmpty());
+    assert(!profile.role.isEmpty());
+    assert(!profile.bio.isEmpty());
+
+    // Test invalid profile detection
+    CreatorProfile empty;
+    empty.name.clear();
+    assert(!empty.isValid());
+
+    std::cout << "  -> PASSED! Creator profile metadata, handles, and URLs verified for Suryansh Swarn." << std::endl;
+}
+
 int main(int argc, char* argv[]) {
     QCoreApplication app(argc, argv);
 
@@ -457,6 +482,7 @@ int main(int argc, char* argv[]) {
     testTreemapAnimationGeometry();
     testFileAgeHeatmap();
     testDuplicateFinderAlgorithm();
+    testCreatorProfile();
 
     std::cout << "========================================" << std::endl;
     std::cout << "  ALL AUTOMATED UNIT TESTS PASSED!      " << std::endl;
