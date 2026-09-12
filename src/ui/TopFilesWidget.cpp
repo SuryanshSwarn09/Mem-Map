@@ -1,4 +1,5 @@
 #include "TopFilesWidget.h"
+#include "ThemeManager.h"
 #include <QVBoxLayout>
 #include <QHeaderView>
 #include <QMenu>
@@ -6,6 +7,8 @@
 #include <QGuiApplication>
 #include <QProcess>
 #include <QDir>
+#include <QPainter>
+#include <QPixmap>
 #include <algorithm>
 
 TopFilesWidget::TopFilesWidget(QWidget* parent)
@@ -108,12 +111,24 @@ void TopFilesWidget::populateFromNode(DiskNode* rootNode, int maxCount) {
     m_topNodes.assign(allFiles.begin(), allFiles.begin() + count);
     m_table->setRowCount(static_cast<int>(m_topNodes.size()));
 
+    const auto& tokens = ThemeManager::instance().tokens();
+
     for (int r = 0; r < static_cast<int>(m_topNodes.size()); ++r) {
         DiskNode* node = m_topNodes[r];
 
-        // Col 0: Rank
-        QTableWidgetItem* itemRank = new QTableWidgetItem(QString::number(r + 1));
+        // Col 0: Rank with medals for top 3
+        QString rankStr = QString::number(r + 1);
+        if (r == 0) rankStr = QStringLiteral("🥇 1");
+        else if (r == 1) rankStr = QStringLiteral("🥈 2");
+        else if (r == 2) rankStr = QStringLiteral("🥉 3");
+
+        QTableWidgetItem* itemRank = new QTableWidgetItem(rankStr);
         itemRank->setTextAlignment(Qt::AlignCenter);
+        if (r < 3) {
+            QFont f = itemRank->font();
+            f.setBold(true);
+            itemRank->setFont(f);
+        }
         m_table->setItem(r, 0, itemRank);
 
         // Col 1: File Name
@@ -125,14 +140,26 @@ void TopFilesWidget::populateFromNode(DiskNode* rootNode, int maxCount) {
         itemSize->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
         m_table->setItem(r, 2, itemSize);
 
-        // Col 3: Type
+        // Col 3: Type with category color badge
+        QColor extColor = DiskNode::getColorForExtension(node->extension());
+        QPixmap typePix(16, 16);
+        typePix.fill(Qt::transparent);
+        {
+            QPainter p(&typePix);
+            p.setRenderHint(QPainter::Antialiasing);
+            p.setBrush(extColor);
+            p.setPen(QPen(extColor.lighter(135), 1.0));
+            p.drawRoundedRect(1, 1, 14, 14, 4, 4);
+        }
+
         QTableWidgetItem* itemType = new QTableWidgetItem(node->extension().toUpper());
-        itemType->setForeground(DiskNode::getColorForExtension(node->extension()));
+        itemType->setIcon(QIcon(typePix));
+        itemType->setForeground(extColor.lighter(120));
         m_table->setItem(r, 3, itemType);
 
         // Col 4: Path
         QTableWidgetItem* itemPath = new QTableWidgetItem(node->parent() ? node->parent()->fullPath() : node->fullPath());
-        itemPath->setForeground(QColor(160, 175, 195));
+        itemPath->setForeground(tokens.textMuted);
         m_table->setItem(r, 4, itemPath);
     }
 }

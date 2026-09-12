@@ -1,4 +1,5 @@
 #include "ExtensionStatsWidget.h"
+#include "ThemeManager.h"
 #include <QVBoxLayout>
 #include <QHeaderView>
 #include <QPainter>
@@ -85,14 +86,14 @@ void ExtensionStatsWidget::populateFromNode(DiskNode* rootNode) {
         const auto& s = list[r];
 
         // Color badge icon
-        QPixmap pix(14, 14);
+        QPixmap pix(16, 16);
         pix.fill(Qt::transparent);
         {
             QPainter p(&pix);
             p.setRenderHint(QPainter::Antialiasing);
             p.setBrush(s.color);
-            p.setPen(Qt::NoPen);
-            p.drawRoundedRect(0, 0, 14, 14, 3, 3);
+            p.setPen(QPen(s.color.lighter(135), 1.0));
+            p.drawRoundedRect(1, 1, 14, 14, 4, 4);
         }
 
         // Col 0: Extension
