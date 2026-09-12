@@ -108,6 +108,8 @@ QString ThemeManager::generateApplicationStyleSheet() const {
 
     const QString accPrimary = m_tokens.accentPrimary.name();
     const QString accCyan = m_tokens.accentCyan.name();
+    const QString accGreen = m_tokens.accentGreen.name();
+    const QString accRed = m_tokens.accentRed.name();
 
     return QStringLiteral(
         "QMainWindow { background-color: %1; }"
@@ -124,6 +126,11 @@ QString ThemeManager::generateApplicationStyleSheet() const {
         "   background-color: %3; border: 1px solid %4; border-radius: 6px; selection-background-color: %8; color: %2; padding: 4px; "
         "}"
 
+        // Header bar card
+        "QFrame#headerBar { "
+        "   background-color: %3; border: 1px solid %4; border-radius: 10px; "
+        "}"
+
         // Buttons
         "QPushButton { "
         "   background-color: %5; border: 1px solid %4; border-radius: 6px; padding: 6px 14px; color: %2; font-weight: 500; "
@@ -131,6 +138,23 @@ QString ThemeManager::generateApplicationStyleSheet() const {
         "QPushButton:hover { background-color: %8; border-color: %6; color: %9; }"
         "QPushButton:pressed { background-color: %10; }"
         "QPushButton:disabled { background-color: %1; color: %11; border-color: %12; }"
+
+        // Radiant Action Buttons
+        "QPushButton#primaryScanBtn { "
+        "   background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %10, stop:1 %7); "
+        "   border: 1px solid %7; color: #FFFFFF; font-weight: 700; font-size: 13px; border-radius: 7px; padding: 6px 18px; "
+        "}"
+        "QPushButton#primaryScanBtn:hover { "
+        "   background: %7; color: #000000; border-color: #FFFFFF; "
+        "}"
+        "QPushButton#primaryScanBtn:pressed { background: %10; color: #FFFFFF; }"
+        "QPushButton#primaryScanBtn:disabled { background-color: %5; border-color: %4; color: %11; }"
+
+        "QPushButton#cancelScanBtn { "
+        "   background-color: %3; border: 1px solid %15; color: %15; font-weight: 600; font-size: 12px; border-radius: 7px; padding: 6px 14px; "
+        "}"
+        "QPushButton#cancelScanBtn:hover { background-color: %15; color: #FFFFFF; }"
+        "QPushButton#cancelScanBtn:disabled { background-color: %1; border-color: %12; color: %11; }"
 
         // Visualizer Toggle Buttons
         "QPushButton#visToggle { "
@@ -212,5 +236,7 @@ QString ThemeManager::generateApplicationStyleSheet() const {
      .arg(accPrimary)    // 10
      .arg(tMuted)        // 11
      .arg(bSubtle)       // 12
-     .arg(overlay);      // 13
+     .arg(overlay)       // 13
+     .arg(accGreen)      // 14
+     .arg(accRed);       // 15
 }

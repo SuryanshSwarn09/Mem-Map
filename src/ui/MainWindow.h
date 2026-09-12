@@ -78,6 +78,7 @@ private:
     QPushButton* m_btnExport{nullptr};
     QPushButton* m_btnSnapshot{nullptr};
     QPushButton* m_btnAbout{nullptr};
+    QComboBox* m_themeCombo{nullptr};
     BreadcrumbWidget* m_breadcrumb{nullptr};
 
     // Central Splitter & Views

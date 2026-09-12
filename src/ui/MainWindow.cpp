@@ -142,39 +142,34 @@ void MainWindow::setupUi() {
     rootLayout->setContentsMargins(12, 12, 12, 6);
     rootLayout->setSpacing(8);
 
-    // Top Bar 1: Drive selection and actions
-    QHBoxLayout* topBar = new QHBoxLayout();
+    // Top Bar 1: Drive selection and actions inside a sleek header container
+    QFrame* topBarCard = new QFrame(this);
+    topBarCard->setObjectName(QStringLiteral("headerBar"));
+    QHBoxLayout* topBar = new QHBoxLayout(topBarCard);
+    topBar->setContentsMargins(10, 8, 10, 8);
     topBar->setSpacing(8);
 
-    QLabel* lblDrive = new QLabel(QStringLiteral("Target:"), this);
-    lblDrive->setStyleSheet(QStringLiteral("font-weight: bold; color: #E6EDF3;"));
+    QLabel* lblDrive = new QLabel(QStringLiteral("TARGET"), this);
+    lblDrive->setStyleSheet(QStringLiteral("font-weight: 700; font-size: 10px; color: #8B949E; letter-spacing: 1px; padding: 0 4px;"));
 
     m_driveCombo = new QComboBox(this);
-    m_driveCombo->setMinimumWidth(220);
+    m_driveCombo->setMinimumWidth(230);
     connect(m_driveCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MainWindow::onDriveSelected);
 
-    m_btnBrowse = new QPushButton(QStringLiteral("📁 Browse Folder..."), this);
+    m_btnBrowse = new QPushButton(QStringLiteral("📂 Browse..."), this);
     m_btnBrowse->setToolTip(QStringLiteral("Browse folder to scan (Ctrl+O)"));
     connect(m_btnBrowse, &QPushButton::clicked, this, &MainWindow::onSelectFolderClicked);
 
     m_btnScan = new QPushButton(QStringLiteral("⚡ Scan Now"), this);
+    m_btnScan->setObjectName(QStringLiteral("primaryScanBtn"));
     m_btnScan->setToolTip(QStringLiteral("Start scanning selected target (F5)"));
-    m_btnScan->setStyleSheet(QStringLiteral(
-        "QPushButton { background-color: #238636; color: #FFFFFF; font-weight: bold; border-radius: 6px; padding: 6px 16px; border: 1px solid #2EA043; }"
-        "QPushButton:hover { background-color: #2EA043; }"
-        "QPushButton:pressed { background-color: #1F7F32; }"
-    ));
     connect(m_btnScan, &QPushButton::clicked, this, &MainWindow::onStartScanClicked);
 
     m_btnCancel = new QPushButton(QStringLiteral("✖ Cancel"), this);
+    m_btnCancel->setObjectName(QStringLiteral("cancelScanBtn"));
     m_btnCancel->setToolTip(QStringLiteral("Cancel ongoing scan"));
     m_btnCancel->setEnabled(false);
-    m_btnCancel->setStyleSheet(QStringLiteral(
-        "QPushButton { background-color: #DA3633; color: #FFFFFF; font-weight: bold; border-radius: 6px; padding: 6px 14px; border: 1px solid #F85149; }"
-        "QPushButton:hover { background-color: #F85149; }"
-        "QPushButton:disabled { background-color: #373E47; color: #768390; border-color: #444C56; }"
-    ));
     connect(m_btnCancel, &QPushButton::clicked, this, &MainWindow::onCancelScanClicked);
 
     topBar->addWidget(lblDrive);
@@ -183,8 +178,14 @@ void MainWindow::setupUi() {
     topBar->addWidget(m_btnScan);
     topBar->addWidget(m_btnCancel);
 
+    // Subtle divider
+    QFrame* divider1 = new QFrame(this);
+    divider1->setFrameShape(QFrame::VLine);
+    divider1->setStyleSheet(QStringLiteral("color: #30363D; margin: 4px 2px;"));
+    topBar->addWidget(divider1);
+
     // Export button with dropdown menu
-    m_btnExport = new QPushButton(QStringLiteral("📑 Export Report ▾"), this);
+    m_btnExport = new QPushButton(QStringLiteral("📑 Reports ▾"), this);
     m_btnExport->setToolTip(QStringLiteral("Export scan report or raw data (Ctrl+E for HTML)"));
     QMenu* exportMenu = new QMenu(m_btnExport);
     QAction* actHtml = exportMenu->addAction(QStringLiteral("🌐 Interactive HTML Report (.html)..."));
@@ -198,7 +199,7 @@ void MainWindow::setupUi() {
     topBar->addWidget(m_btnExport);
 
     // Snapshot button with dropdown menu
-    m_btnSnapshot = new QPushButton(QStringLiteral("💾 Snapshot ▾"), this);
+    m_btnSnapshot = new QPushButton(QStringLiteral("💾 Snapshots ▾"), this);
     m_btnSnapshot->setToolTip(QStringLiteral("Save or compare disk snapshots (Ctrl+S to save)"));
     QMenu* snapshotMenu = new QMenu(m_btnSnapshot);
     QAction* actSaveSnap = snapshotMenu->addAction(QStringLiteral("💾 Save Current Scan as Snapshot (.mmap)..."));
@@ -213,18 +214,26 @@ void MainWindow::setupUi() {
     topBar->addWidget(m_btnSnapshot);
 
     // Creator & Social Links button
-    m_btnAbout = new QPushButton(QStringLiteral("👤 Creator & Links"), this);
+    m_btnAbout = new QPushButton(QStringLiteral("👤 Creator"), this);
     m_btnAbout->setToolTip(QStringLiteral("About Mem-Map, creator profile (Suryansh Swarn), and social links"));
-    m_btnAbout->setStyleSheet(QStringLiteral(
-        "QPushButton { background-color: #21262D; color: #C9D1D9; border: 1px solid #30363D; border-radius: 6px; padding: 5px 12px; font-weight: 500; font-size: 12px; }"
-        "QPushButton:hover { background-color: #30363D; color: #58A6FF; border-color: #58A6FF; }"
-    ));
     connect(m_btnAbout, &QPushButton::clicked, this, &MainWindow::onAboutClicked);
     topBar->addWidget(m_btnAbout);
 
     topBar->addStretch();
 
-    rootLayout->addLayout(topBar);
+    // Theme Preset Selector Pill
+    m_themeCombo = new QComboBox(this);
+    m_themeCombo->setToolTip(QStringLiteral("Switch Visual Theme Preset"));
+    m_themeCombo->addItem(QStringLiteral("🌙 Midnight Slate"), static_cast<int>(ThemePreset::MidnightSlate));
+    m_themeCombo->addItem(QStringLiteral("🖤 Obsidian OLED"), static_cast<int>(ThemePreset::ObsidianOLED));
+    m_themeCombo->addItem(QStringLiteral("❄️ Nordic Frost"), static_cast<int>(ThemePreset::NordicFrost));
+    connect(m_themeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
+        ThemePreset preset = static_cast<ThemePreset>(m_themeCombo->currentData().toInt());
+        ThemeManager::instance().setTheme(preset);
+    });
+    topBar->addWidget(m_themeCombo);
+
+    rootLayout->addWidget(topBarCard);
 
     // Top Bar 2: Breadcrumbs
     m_breadcrumb = new BreadcrumbWidget(this);
