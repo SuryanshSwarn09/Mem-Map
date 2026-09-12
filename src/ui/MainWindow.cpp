@@ -16,6 +16,7 @@
 #include "ReportExporter.h"
 #include "SnapshotEngine.h"
 #include "AboutDialog.h"
+#include "ThemeManager.h"
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -23,6 +24,9 @@ MainWindow::MainWindow(QWidget* parent)
 {
     setupUi();
     applyDarkTheme();
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, [this](ThemePreset) {
+        applyDarkTheme();
+    });
     populateDrives();
 
     // Scanner signals
@@ -388,43 +392,7 @@ void MainWindow::setupUi() {
 }
 
 void MainWindow::applyDarkTheme() {
-    QString qss = QStringLiteral(
-        "QMainWindow { background-color: #0D1117; }"
-        "QWidget { color: #C9D1D9; font-family: 'Segoe UI', 'SF Pro Display', sans-serif; font-size: 13px; }"
-        "QComboBox, QPushButton, QLineEdit { background-color: #21262D; border: 1px solid #30363D; border-radius: 6px; padding: 5px 10px; color: #C9D1D9; }"
-        "QComboBox:hover, QPushButton:hover { background-color: #30363D; border-color: #8B949E; }"
-        "QPushButton#visToggle { background-color: #21262D; border: 1px solid #30363D; border-radius: 4px; padding: 4px 12px; color: #8B949E; font-weight: bold; font-size: 12px; }"
-        "QPushButton#visToggle:checked { background-color: #1F6FEB; border-color: #388BFD; color: #FFFFFF; }"
-        "QPushButton#visToggle:hover:!checked { background-color: #30363D; color: #C9D1D9; }"
-        "QComboBox::drop-down { border: none; width: 20px; }"
-        "QComboBox QAbstractItemView { background-color: #161B22; border: 1px solid #30363D; selection-background-color: #1F6FEB; color: #C9D1D9; }"
-        "QTabWidget::pane { border: 1px solid #30363D; background-color: #161B22; border-radius: 6px; }"
-        "QTabBar::tab { background-color: #0D1117; color: #8B949E; padding: 8px 16px; border-top-left-radius: 6px; border-top-right-radius: 6px; border: 1px solid #30363D; border-bottom: none; margin-right: 2px; }"
-        "QTabBar::tab:selected { background-color: #161B22; color: #58A6FF; font-weight: bold; border-color: #30363D; }"
-        "QTabBar::tab:hover:!selected { background-color: #1F242C; color: #C9D1D9; }"
-        "QTreeView, QTableWidget { background-color: #161B22; border: none; gridline-color: #21262D; alternate-background-color: #0D1117; }"
-        "QTreeView::item, QTableWidget::item { padding: 4px; border: none; }"
-        "QTreeView::item:hover, QTableWidget::item:hover { background-color: #1F242C; }"
-        "QTreeView::item:selected, QTableWidget::item:selected { background-color: #1F6FEB; color: #FFFFFF; }"
-        "QHeaderView::section { background-color: #0D1117; color: #8B949E; padding: 5px 8px; border: none; border-bottom: 1px solid #30363D; border-right: 1px solid #21262D; font-weight: bold; font-size: 12px; }"
-        "QProgressBar { background-color: #21262D; border: 1px solid #30363D; border-radius: 4px; }"
-        "QProgressBar::chunk { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1F6FEB, stop:1 #58A6FF); border-radius: 3px; }"
-        "QSplitter::handle { background-color: #21262D; }"
-        "QSplitter::handle:hover { background-color: #58A6FF; }"
-        "QScrollBar:vertical { background-color: #0D1117; width: 10px; margin: 0; }"
-        "QScrollBar::handle:vertical { background-color: #30363D; min-height: 20px; border-radius: 4px; }"
-        "QScrollBar::handle:vertical:hover { background-color: #58A6FF; }"
-        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }"
-        "QScrollBar:horizontal { background-color: #0D1117; height: 10px; margin: 0; }"
-        "QScrollBar::handle:horizontal { background-color: #30363D; min-width: 20px; border-radius: 4px; }"
-        "QScrollBar::handle:horizontal:hover { background-color: #58A6FF; }"
-        "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }"
-        "QMenu { background-color: #161B22; border: 1px solid #30363D; color: #C9D1D9; padding: 4px; }"
-        "QMenu::item { padding: 6px 24px 6px 12px; border-radius: 4px; }"
-        "QMenu::item:selected { background-color: #1F6FEB; color: #FFFFFF; }"
-        "QToolTip { background-color: #161B22; border: 1px solid #58A6FF; color: #FFFFFF; padding: 6px; border-radius: 4px; }"
-    );
-    setStyleSheet(qss);
+    setStyleSheet(ThemeManager::instance().generateApplicationStyleSheet());
 }
 
 void MainWindow::populateDrives() {

@@ -54,6 +54,8 @@ set(UI_SOURCES
     src/ui/DuplicateFilesWidget.cpp
     src/ui/AboutDialog.h
     src/ui/AboutDialog.cpp
+    src/ui/ThemeManager.h
+    src/ui/ThemeManager.cpp
     src/ui/MainWindow.h
     src/ui/MainWindow.cpp
 )
@@ -95,6 +97,8 @@ add_executable(test_runner
     ${CORE_SOURCES}
     src/ui/TreemapLayout.h
     src/ui/TreemapLayout.cpp
+    src/ui/ThemeManager.h
+    src/ui/ThemeManager.cpp
 )
 
 target_include_directories(test_runner PRIVATE
