@@ -263,23 +263,23 @@ void MainWindow::setupUi() {
     m_treeView->header()->setSectionResizeMode(DiskTreeModel::ColType, QHeaderView::ResizeToContents);
     m_treeView->header()->resizeSection(DiskTreeModel::ColUsage, 120);
 
-    m_tabs->addTab(m_treeView, QStringLiteral("Directory Tree"));
+    m_tabs->addTab(m_treeView, QStringLiteral("📁 Directory Tree"));
 
     // Tab 2: File Types breakdown
     m_extStatsWidget = new ExtensionStatsWidget(this);
-    m_tabs->addTab(m_extStatsWidget, QStringLiteral("File Types"));
+    m_tabs->addTab(m_extStatsWidget, QStringLiteral("📊 File Types"));
 
     // Tab 3: Top Largest Files
     m_topFilesWidget = new TopFilesWidget(this);
-    m_tabs->addTab(m_topFilesWidget, QStringLiteral("Top 100 Files"));
+    m_tabs->addTab(m_topFilesWidget, QStringLiteral("🏆 Top 100 Files"));
 
     // Tab 4: Snapshot Diff View
     m_snapshotDiffWidget = new SnapshotDiffWidget(this);
-    m_tabs->addTab(m_snapshotDiffWidget, QStringLiteral("Snapshot Diff"));
+    m_tabs->addTab(m_snapshotDiffWidget, QStringLiteral("⚖ Snapshot Diff"));
 
     // Tab 5: Duplicate File Finder
     m_duplicateWidget = new DuplicateFilesWidget(this);
-    m_tabs->addTab(m_duplicateWidget, QStringLiteral("Duplicate Files"));
+    m_tabs->addTab(m_duplicateWidget, QStringLiteral("🔍 Duplicate Files"));
 
     // Right Pane: Visualization Container with View Switcher
     m_visContainer = new QWidget(this);
