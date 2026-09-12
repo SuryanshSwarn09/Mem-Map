@@ -101,3 +101,23 @@ An in-depth architectural examination of Mem-Map's core subsystems, data structu
   - **Direct System Integration**: Integrates `QDesktopServices::openUrl` for launching web profiles (GitHub, LinkedIn, X) and default email clients.
   - **Clipboard Acceleration**: Incorporates `QClipboard` with interactive feedback to facilitate sharing the repository URL.
 
+---
+
+## 9. Module I: ThemeManager & Design System Subsystem (`ThemeManager`, Phase 10)
+- **Header / Source**: `src/ui/ThemeManager.h`, `src/ui/ThemeManager.cpp`
+- **Responsibilities**: Centralizes semantic color token architecture, theme presets, and dynamic application-wide QSS stylesheet synthesis.
+- **Key Engineering Decisions**:
+  - **Token-Based Architecture**: Organizes design tokens across surfaces (`surfaceDeep`, `surfaceBase`, `surfaceCard`, `surfaceOverlay`, `surfaceHover`, `surfaceActive`), borders (`borderSubtle`, `borderMuted`, `borderFocus`), typography (`textPrimary`, `textSecondary`, `textMuted`), and semantic accents (`accentPrimary`, `accentCyan`, `accentGreen`, `accentRed`, `accentAmber`, `accentPurple`).
+  - **Curated Theme Presets**:
+    - `MidnightSlate`: Modern dark slate design system inspired by Linear and GitHub Dark mode (`#090D12` deep background).
+    - `ObsidianOLED`: True-black `#000000` surfaces paired with high-contrast `#00FFCC` neon focus accents.
+    - `NordicFrost`: Deep Arctic Indigo (`#0B0F19`) with frosty `#38BDF8` cyan highlights.
+  - **Component Visual Elevations**:
+    - *Radiant Action Buttons*: Primary scan button features a multi-stop Linear-style radiant gradient with glowing focus states.
+    - *Capsule Breadcrumb Navigation*: Sleek track container with rounded pill items (`10px` radius), active folder gradient capsules, and chevron dividers.
+    - *Segmented Pill TabBar*: Modern tab bar styling with active indicator lines and distinctive feature icons (`📁`, `📊`, `🏆`, `⚖`, `🔍`).
+    - *Rank Badges & Pills*: Top 100 Files table includes 🥇 Gold, 🥈 Silver, and 🥉 Bronze rank badges, paired with anti-aliased file type pills.
+    - *Cushioned Treemap Tiles*: Rounded leaf tiles (`2.5px` radius) with 3-stop specular cushion lighting, drop-shadowed typography, and radiant gold selection halos.
+    - *Annular Sunburst Core*: Radial core hub gradient, depth-toning for nested annular rings, and glowing selection highlights.
+    - *Bottom Telemetry Dock*: Dedicated container dock frame with pill stat capsules for file counts, total size, and timer telemetry.
+

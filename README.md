@@ -118,6 +118,7 @@ For in-depth architectural deep dives, Mermaid.js sequence and class diagrams, c
 | **Phase 7: Age Heatmap** | 6-tier thermal coloring, C++20 `last_write_time`, age legend bar. | `DiskNode.cpp`, `TreemapWidget.cpp`, `SunburstWidget.cpp` | `testFileAgeHeatmap` | Synced |
 | **Phase 8: Duplicate Finder** | Multi-pass hash engine (MD5/SHA-256), wasted space tracker, smart auto-select (newest/oldest), safe Recycle Bin cleanup. | `DuplicateFinder.cpp`, `DuplicateFilesWidget.cpp`, `MainWindow.cpp` | `testDuplicateFinderAlgorithm` | Synced |
 | **Phase 9: Creator & Socials** | Creator profile modal, social media action links (GitHub, LinkedIn, X, Email), clipboard sharing for Suryansh Swarn. | `CreatorProfile.h`, `AboutDialog.cpp`, `MainWindow.cpp` | `testCreatorProfile` | Synced |
+| **Phase 10: Visual Overhaul** | ThemeManager design tokens, 3 presets (Midnight Slate, Obsidian OLED, Nordic Frost), radiant gradient action buttons, capsule breadcrumbs, pill tab bar, rank badges, cushioned treemap tiles, annular sunburst hub gradients, bottom telemetry dock. | `ThemeManager.cpp`, `MainWindow.cpp`, `BreadcrumbWidget.cpp`, `SizeBarDelegate.cpp`, `TreemapWidget.cpp`, `SunburstWidget.cpp` | `testThemeManager` | Synced |
 
 ---
 
@@ -146,5 +147,5 @@ E:\Mem-scan\
 │   ├── main.cpp                # Application entry point & High-DPI scaling
 │   ├── core\                   # Scanner, DiskNode, Exporter, Snapshot engines
 │   └── ui\                     # MainWindow, Treemap, Sunburst, Breadcrumbs
-└── tests\                      # Automated unit test suite (7 test suites)
+└── tests\                      # Automated unit test suite (10 test suites)
 ```

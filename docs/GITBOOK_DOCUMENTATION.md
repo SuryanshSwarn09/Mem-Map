@@ -304,6 +304,9 @@ $env:PATH = "C:\msys64\ucrt64\bin;C:\msys64\usr\bin;" + $env:PATH
 5. `testSnapshotEngine`: Tests binary serialization round-trip fidelity and diff delta calculations.
 6. `testTreemapAnimationGeometry`: Asserts sub-pixel interpolation keyframe geometry at $t=0.0, 0.5, 1.0$.
 7. `testFileAgeHeatmap`: Validates thermal color assignments, relative age string generation, and timestamp rollup.
+8. `testDuplicateFinderAlgorithm`: Validates two-stage fast MD5 and SHA-256 duplicate detection and wasted space computation.
+9. `testCreatorProfile`: Validates creator profile metadata, social media handle verification, and URLs for Suryansh Swarn.
+10. `testThemeManager`: Validates dynamic theme preset switching (Midnight Slate, Obsidian OLED, Nordic Frost), token matrices, signal dispatch, and stylesheet generation.
 
 ### 4.5 Packaging & Deployment
 To package `Mem-Map.exe` for standalone distribution without requiring MSYS2 on the target machine:
@@ -398,6 +401,8 @@ Mem-Map undergoes continuous verification through automated regression testing a
   -> PASSED! Duplicate detection, multi-pass filtering, and wasted storage calculation verified.
 [TEST] Running testCreatorProfile...
   -> PASSED! Creator profile metadata, handles, and URLs verified for Suryansh Swarn.
+[TEST] Running testThemeManager...
+  -> PASSED! ThemeManager presets, token matrices, signal dispatch, and stylesheet generation verified.
 ========================================
   ALL AUTOMATED UNIT TESTS PASSED!      
 ========================================
@@ -423,6 +428,7 @@ To guarantee that code evolution and documentation never drift apart, every impr
 | **Phase 7: Age Heatmap** | 6-tier thermal coloring, C++20 `last_write_time`, age legend bar. | `DiskNode.cpp`, `TreemapWidget.cpp`, `SunburstWidget.cpp` | `b65590d..3d7ae7a` | `testFileAgeHeatmap` | ✅ Synced |
 | **Phase 8: Duplicate Finder** | Multi-pass hash engine (MD5/SHA-256), wasted space tracker, smart auto-select (newest/oldest), safe Recycle Bin cleanup. | `DuplicateFinder.cpp`, `DuplicateFilesWidget.cpp`, `MainWindow.cpp` | `9779951..406d00c` | `testDuplicateFinderAlgorithm` | ✅ Synced |
 | **Phase 9: Creator & Socials** | Creator profile modal, social media action links (GitHub, LinkedIn, X, Email), clipboard sharing for Suryansh Swarn. | `CreatorProfile.h`, `AboutDialog.cpp`, `MainWindow.cpp` | `cecbe2c..ca29cbd` | `testCreatorProfile` | ✅ Synced |
+| **Phase 10: Visual Overhaul** | ThemeManager design system tokens (Midnight Slate, Obsidian OLED, Nordic Frost), radiant gradient action buttons, capsule breadcrumb navigation, pill tab bar, custom rank badges, cushioned treemap tile lighting, annular sunburst hub gradients, and bottom telemetry dock. | `src/ui/ThemeManager.h`, `src/ui/ThemeManager.cpp`, `src/ui/MainWindow.cpp`, `src/ui/BreadcrumbWidget.cpp`, `src/ui/SizeBarDelegate.cpp`, `src/ui/TreemapWidget.cpp`, `src/ui/SunburstWidget.cpp` | `92ae6e7..fd32353` | `testThemeManager` | ✅ Synced |
 
 ### 7.2 Parallel Documentation Maintenance Protocol
 
