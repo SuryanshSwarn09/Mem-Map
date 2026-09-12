@@ -9,6 +9,7 @@
 #include "core/DuplicateFinder.h"
 #include "core/CreatorProfile.h"
 #include "ui/TreemapLayout.h"
+#include "ui/ThemeManager.h"
 
 namespace fs = std::filesystem;
 
@@ -467,6 +468,57 @@ void testCreatorProfile() {
     std::cout << "  -> PASSED! Creator profile metadata, handles, and URLs verified for Suryansh Swarn." << std::endl;
 }
 
+void testThemeManager() {
+    std::cout << "[TEST] Running testThemeManager..." << std::endl;
+    ThemeManager& tm = ThemeManager::instance();
+
+    // 1. Initial preset should be MidnightSlate
+    assert(tm.currentPreset() == ThemePreset::MidnightSlate);
+    assert(tm.tokens().name == QStringLiteral("Midnight Slate"));
+    assert(tm.tokens().surfaceDeep.isValid());
+    assert(tm.tokens().surfaceCard.isValid());
+    assert(tm.tokens().accentPrimary.isValid());
+    assert(tm.tokens().borderFocus.isValid());
+
+    // 2. Test switching to ObsidianOLED
+    tm.setTheme(ThemePreset::ObsidianOLED);
+    assert(tm.currentPreset() == ThemePreset::ObsidianOLED);
+    assert(tm.tokens().name == QStringLiteral("Obsidian OLED"));
+    assert(tm.tokens().surfaceDeep == QColor(QStringLiteral("#000000")));
+    assert(tm.tokens().borderFocus == QColor(QStringLiteral("#00FFCC")));
+
+    // 3. Test switching to NordicFrost
+    tm.setTheme(ThemePreset::NordicFrost);
+    assert(tm.currentPreset() == ThemePreset::NordicFrost);
+    assert(tm.tokens().name == QStringLiteral("Nordic Frost"));
+    assert(tm.tokens().surfaceDeep == QColor(QStringLiteral("#0B0F19")));
+    assert(tm.tokens().accentCyan == QColor(QStringLiteral("#38BDF8")));
+
+    // 4. Test stylesheet generation
+    QString qss = tm.generateApplicationStyleSheet();
+    assert(!qss.isEmpty());
+    assert(qss.contains(QStringLiteral("headerBar")));
+    assert(qss.contains(QStringLiteral("statusDock")));
+    assert(qss.contains(QStringLiteral("primaryScanBtn")));
+    assert(qss.contains(QStringLiteral("statsPill")));
+    assert(qss.contains(QStringLiteral("timePill")));
+
+    // 5. Test signal emission on theme change
+    bool signalReceived = false;
+    ThemePreset receivedPreset = ThemePreset::NordicFrost;
+    QObject::connect(&tm, &ThemeManager::themeChanged, [&signalReceived, &receivedPreset](ThemePreset p) {
+        signalReceived = true;
+        receivedPreset = p;
+    });
+
+    tm.setTheme(ThemePreset::MidnightSlate);
+    assert(signalReceived);
+    assert(receivedPreset == ThemePreset::MidnightSlate);
+    assert(tm.currentPreset() == ThemePreset::MidnightSlate);
+
+    std::cout << "  -> PASSED! ThemeManager presets, token matrices, signal dispatch, and stylesheet generation verified." << std::endl;
+}
+
 int main(int argc, char* argv[]) {
     QCoreApplication app(argc, argv);
 
@@ -483,6 +535,7 @@ int main(int argc, char* argv[]) {
     testFileAgeHeatmap();
     testDuplicateFinderAlgorithm();
     testCreatorProfile();
+    testThemeManager();
 
     std::cout << "========================================" << std::endl;
     std::cout << "  ALL AUTOMATED UNIT TESTS PASSED!      " << std::endl;
